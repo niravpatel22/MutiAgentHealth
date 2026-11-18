@@ -1,4 +1,4 @@
-# Live Demonstration Script (6 to 8 Minutes) — CareOps Intelligence
+# Live Demonstration Script (6 to 8 Minutes) — MediOps Intelligence
 
 **Target duration:** 6–8 minutes
 **Dataset:** `data/01_Healthcare.xlsx` (May 1 – Oct 31, 2026, INR)

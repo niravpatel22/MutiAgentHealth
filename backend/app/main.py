@@ -8,7 +8,7 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse
 from slowapi.errors import RateLimitExceeded
 
-from app.api.v1 import api_router
+from app.api.v1 import api_router, health
 from app.core.config import Settings, get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging
@@ -62,6 +62,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         html = re.sub(r"<script(?![^>]*\bsrc=)", f'<script nonce="{nonce}"', raw.body.decode())
         return HTMLResponse(html, headers={"Content-Security-Policy": docs_csp(nonce)})
 
+    app.include_router(health.router, include_in_schema=False)
     app.include_router(api_router, prefix=settings.api_v1_prefix)
     return app
 

@@ -7,6 +7,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
+from pydantic import EmailStr, TypeAdapter
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -168,10 +169,11 @@ def logout(db: Session, raw_token: str | None) -> None:
 
 def seed_admin(db: Session, settings: Settings) -> tuple[User, bool]:
     """Create the first admin from env vars. Idempotent; returns (user, created)."""
-    email = settings.admin_email.strip().lower()
+    raw_email = settings.admin_email.strip().lower()
     password = settings.admin_password.get_secret_value()
-    if not email or not password:
+    if not raw_email or not password:
         raise ValueError("ADMIN_EMAIL and ADMIN_PASSWORD must be set to seed the admin")
+    email = str(TypeAdapter(EmailStr).validate_python(raw_email)).lower()
     existing = db.scalar(select(User).where(User.email == email))
     if existing is not None:
         if existing.role != Role.ADMIN:

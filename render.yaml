@@ -1,6 +1,5 @@
-# Render Blueprint for CareOps Intelligence
-# Deploy at: https://dashboard.render.com/blueprints -> New Blueprint Instance
-# Connect repository: https://github.com/niravpatel22/MutiAgentHealth
+# Render Blueprint for MediOps Intelligence (100% Free-Tier Compatible: Postgres + API/Worker + React Static SPA)
+# One-Click Deploy URL: https://dashboard.render.com/blueprint/new?repo=https://github.com/niravpatel22/MutiAgentHealth
 
 databases:
   - name: careops-db
@@ -17,6 +16,8 @@ services:
     plan: free
     healthCheckPath: /api/v1/health
     envVars:
+      - key: APP_NAME
+        value: MediOps Intelligence
       - key: APP_ENV
         value: production
       - key: LOG_LEVEL
@@ -30,9 +31,9 @@ services:
       - key: COOKIE_SECURE
         value: "true"
       - key: CORS_ORIGINS
-        value: http://localhost:5173
+        value: https://careops-web.onrender.com,http://localhost:5173
       - key: ADMIN_EMAIL
-        sync: false
+        value: admin@mediops.example
       - key: ADMIN_PASSWORD
         sync: false
       - key: LLM_MODEL
@@ -40,23 +41,26 @@ services:
       - key: LLM_API_KEY
         sync: false
 
-  - type: worker
-    name: careops-worker
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    dockerCommand: python -m app.worker
-    plan: starter
+  - type: web
+    name: careops-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
     envVars:
-      - key: APP_ENV
-        value: production
-      - key: LOG_LEVEL
-        value: INFO
-      - key: DATABASE_URL
-        fromDatabase:
-          name: careops-db
-          property: connectionString
-      - key: LLM_MODEL
-        value: gemini/gemini-2.5-flash
-      - key: LLM_API_KEY
-        sync: false
+      - key: VITE_API_BASE_URL
+        value: https://careops-api.onrender.com/api/v1
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: no-referrer
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

@@ -1,4 +1,4 @@
-# Deployment Guide — CareOps Intelligence
+# Deployment Guide — MediOps Intelligence
 
 This guide covers one-command local Docker deployment and step-by-step cloud deployment for:
 - **Backend (API + Worker):** Render (`render.yaml` Blueprint), Railway, or Fly.io

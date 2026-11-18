@@ -69,14 +69,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
+      - run: uv python install 3.12
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: pip-audit (locked runtime + dev deps)
         working-directory: backend
         run: |
-          uv export --frozen --format requirements-txt --no-hashes > /tmp/requirements.txt
-          uvx pip-audit --strict -r /tmp/requirements.txt
+          uv export --frozen --format requirements-txt --no-hashes --no-emit-project > /tmp/requirements.txt
+          uvx --python 3.12 pip-audit --no-deps --strict -r /tmp/requirements.txt
       - name: npm audit (production dependencies, blocking)
         working-directory: frontend
         run: npm audit --omit=dev --audit-level=high
