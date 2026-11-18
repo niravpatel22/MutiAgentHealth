@@ -1,7 +1,7 @@
-# CareOps Intelligence
+# MediOps Intelligence
 
-**AI-Powered Smart Business Operations & Decision Intelligence System — Healthcare Edition**
-Hospital Operations & Performance Intelligence on `data/01_Healthcare.xlsx` (May 1 – Oct 31, 2026, INR).
+**AI-Powered Hospital Operations & Performance Intelligence.**
+Full-stack multi-agent business operations and decision intelligence platform on `data/01_Healthcare.xlsx` (May 1 – Oct 31, 2026, INR).
 
 **Mandatory Stack:** React 18 + Vite · Python 3.12 + FastAPI · CrewAI 1.15.41 + LLM · PostgreSQL 16+ · JWT (`argon2id` + rotating `httpOnly` refresh cookie) · Docker · GitHub Actions CI.
 

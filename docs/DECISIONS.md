@@ -8,7 +8,7 @@ changing a default later is a config or small code change unless noted.
 | D-001 | Repo root | The workspace folder is the repo root (the brief's `healthcare-bi/` layout starts here). | Accepted |
 | D-002 | LLM provider | Provider-agnostic via CrewAI's LiteLLM-backed `LLM(model=...)`. Example default `LLM_MODEL=gemini/gemini-2.5-flash`. Switching provider = env change only. LLM is mocked in all tests. | Accepted, provider confirmable |
 | D-003 | CrewAI version | Pinned to stable release `crewai==1.15.41` on Python 3.12 after verifying signatures and telemetry/storage behavior. | Accepted |
-| D-004 | Branding | Product name **CareOps Intelligence**, teal `#0E7C86` accent, no logo. | Default, confirmable |
+| D-004 | Branding | Product name **MediOps Intelligence**, subtitle **AI-Powered Hospital Operations & Performance Intelligence.**, restrained teal (`#0E7C86`), navy (`#0F172A`), white (`#FFFFFF`), and neutral-grey (`#F8FAFC` / `#64748B`) palette. | Accepted |
 | D-005 | Admin seed | First admin from `ADMIN_EMAIL` / `ADMIN_PASSWORD` env vars; no default values in code. | Accepted |
 | D-006 | Report "as of" date | Dataset end date **2026-10-31** is the reference date for expiry windows and for treating Scheduled appointments as pipeline. | Accepted |
 | D-007 | Margin basis | Default margin basis = **Approved** expenses. Pending shown as exposure; Rejected shown but never counted as cost. Basis is always stated. | Accepted |
