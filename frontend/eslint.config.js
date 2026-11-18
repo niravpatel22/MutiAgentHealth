@@ -26,7 +26,7 @@ export default [
       'react/no-danger': 'error',
       'no-eval': 'error',
       'no-implied-eval': 'error',
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      'react-refresh/only-export-components': 'off',
     },
   },
   {
