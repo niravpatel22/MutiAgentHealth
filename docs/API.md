@@ -32,3 +32,6 @@ The interactive OpenAPI documentation is served by the backend at **`/docs`**
 | GET | `/api/v1/datasets/{id}` | Owner or `admin` | Dataset metadata and quality report |
 | GET | `/api/v1/datasets/{id}/quality-report` | Owner or `admin` | Detailed ingestion quality report |
 | DELETE | `/api/v1/datasets/{id}` | Owner (`manager`) or `admin` | Delete dataset and cascade domain rows |
+| GET | `/api/v1/datasets/{id}/kpis` | Owner or `admin` | 9 dashboard KPI cards + supplementary metrics (`?from=&to=`) |
+| GET | `/api/v1/datasets/{id}/trends` | Owner or `admin` | Monthly revenue/expenses, appointment status stacks, and anomalies |
+| GET | `/api/v1/datasets/{id}/breakdowns/{dimension}` | Owner or `admin` | Dimensional breakdowns (`department`, `payment_status`, `city`, `insurance_provider`, `age_band`, `category`, `doctor_id`, `service_type`, `approval_status`) |
