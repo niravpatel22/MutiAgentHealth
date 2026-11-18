@@ -14,7 +14,9 @@ const BusinessProfilePage = lazy(() => import('../pages/BusinessProfilePage.jsx'
 const AnalysesPage = lazy(() => import('../pages/AnalysesPage.jsx'));
 const ReportsPage = lazy(() => import('../pages/ReportsPage.jsx'));
 const ApprovalsPage = lazy(() => import('../pages/ApprovalsPage.jsx'));
-const PlaceholderPage = lazy(() => import('../pages/PlaceholderPage.jsx'));
+const ChatPage = lazy(() => import('../pages/ChatPage.jsx'));
+const HistoryPage = lazy(() => import('../pages/HistoryPage.jsx'));
+const AdminPage = lazy(() => import('../pages/AdminPage.jsx'));
 
 const defaultQueryClient = new QueryClient({
   defaultOptions: {
@@ -52,19 +54,13 @@ export function AppRoutes() {
           <Route path="/analyses" element={<AnalysesPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/approvals" element={<ApprovalsPage />} />
-          <Route
-            path="/chat"
-            element={<PlaceholderPage title="Grounded Business Q&A Chat" phase="Phase 6" />}
-          />
-          <Route
-            path="/history"
-            element={<PlaceholderPage title="Analysis History" phase="Phase 6" />}
-          />
+          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/history" element={<HistoryPage />} />
           <Route
             path="/admin"
             element={
               <RequireAuth allowedRoles={['admin']}>
-                <PlaceholderPage title="Admin Console" phase="Phase 6" />
+                <AdminPage />
               </RequireAuth>
             }
           />
