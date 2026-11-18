@@ -31,7 +31,11 @@ from app.schemas.analysis import (
     StrategyReportOutput,
 )
 from app.services import analysis_service, auth_service
-from app.worker.runner import process_next_analysis_job
+from app.worker.runner import (
+    INTERRUPTED_RUN_MESSAGE,
+    process_next_analysis_job,
+    recover_interrupted_runs,
+)
 
 WORKBOOK_PATH = Path(__file__).resolve().parents[2] / "data" / "01_Healthcare.xlsx"
 
@@ -300,6 +304,33 @@ def test_rejected_report_creates_zero_pending_recommendations(
         select(Recommendation).where(Recommendation.report_id == report.id)
     ).all()
     assert recs == []
+
+
+def test_worker_restart_recovery_and_idempotent_no_duplicate_reports(
+    db_session: Session, test_settings: Settings
+) -> None:
+    mgr, ds = _seed_dataset(db_session, test_settings)
+
+    # 1. Simulate a worker crash leaving a run in RUNNING state
+    interrupted = analysis_service.enqueue_analysis(db_session, mgr, ds.id)
+    interrupted.status = AnalysisStatus.RUNNING
+    interrupted.current_agent = "finance"
+    db_session.commit()
+
+    recovered_count = recover_interrupted_runs(db_session)
+    assert recovered_count == 1
+    db_session.refresh(interrupted)
+    # Never marked COMPLETED: marked FAILED with clear message
+    assert interrupted.status == AnalysisStatus.FAILED
+    assert interrupted.error == INTERRUPTED_RUN_MESSAGE
+
+    # 2. Dataset is now unlocked for a fresh run; verify idempotent execution creates no duplicates
+    fresh_run = analysis_service.enqueue_analysis(db_session, mgr, ds.id)
+    report1 = execute_analysis_pipeline(db_session, test_settings, fresh_run)
+    report2 = execute_analysis_pipeline(db_session, test_settings, fresh_run)
+    assert report1.id == report2.id
+    all_reports = db_session.scalars(select(Report).where(Report.analysis_id == fresh_run.id)).all()
+    assert len(all_reports) == 1
 
 
 @pytest.mark.live_llm

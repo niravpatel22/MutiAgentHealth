@@ -553,7 +553,20 @@ def execute_analysis_pipeline(
     business_context: str = "",
     step_runner: StepRunner | None = None,
 ) -> Report:
-    """Execute the 6-agent pipeline, revision loop (max 2), and persist Report + Recommendations."""
+    """Execute the 6-agent pipeline, revision loop (max 2), and persist Report + Recommendations.
+
+    Idempotent: if a Report already exists for ``run.id``, returns it immediately without
+    creating duplicate reports or recommendations.
+    """
+    existing_report = db.scalar(select(Report).where(Report.analysis_id == run.id))
+    if existing_report is not None:
+        if run.status != AnalysisStatus.COMPLETED:
+            run.status = AnalysisStatus.COMPLETED
+            run.current_agent = None
+            run.finished_at = run.finished_at or utcnow()
+            db.commit()
+        return existing_report
+
     started_monotonic = time.monotonic()
     timeout_s = settings.analysis_timeout_seconds
 
