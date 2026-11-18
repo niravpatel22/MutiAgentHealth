@@ -51,10 +51,12 @@ def test_register_login_me_refresh_and_logout_flow(client: TestClient) -> None:
 
     # Re-presenting the old (already rotated) refresh token triggers reuse detection
     # and revokes the entire token family (including second_refresh).
+    client.cookies.clear()
     client.cookies.set("careops_refresh", first_refresh, path="/api/v1/auth")
     reuse = client.post("/api/v1/auth/refresh")
     assert reuse.status_code == 401
 
+    client.cookies.clear()
     client.cookies.set("careops_refresh", second_refresh, path="/api/v1/auth")
     after_compromise = client.post("/api/v1/auth/refresh")
     assert after_compromise.status_code == 401
