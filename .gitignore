@@ -24,6 +24,7 @@ htmlcov/
 node_modules/
 frontend/dist/
 frontend/coverage/
+.netlify/
 *.tsbuildinfo
 npm-debug.log*
 
@@ -40,6 +41,7 @@ tmp/
 # ---- Generated reports (only the committed sample is kept) ----
 *.pdf
 !docs/sample_report.pdf
+!frontend/public/sample_report.pdf
 
 # ---- Editors / OS ----
 .vscode/*
