@@ -5,6 +5,7 @@ from app.api.v1 import (
     analyses,
     analytics,
     auth,
+    chat,
     datasets,
     health,
     profile,
@@ -21,4 +22,5 @@ api_router.include_router(analytics.router)
 api_router.include_router(analyses.router)
 api_router.include_router(reports.router)
 api_router.include_router(recommendations.router)
+api_router.include_router(chat.router)
 api_router.include_router(admin.router)
