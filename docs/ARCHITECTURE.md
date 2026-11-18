@@ -1,4 +1,4 @@
-# Architecture — CareOps Intelligence
+# Architecture — MediOps Intelligence
 
 **AI-Powered Smart Business Operations & Decision Intelligence System: Healthcare Edition**
 

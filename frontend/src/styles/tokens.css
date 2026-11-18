@@ -244,6 +244,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+  flex-wrap: wrap;
 }
 
 .topbar-controls {
@@ -251,6 +252,8 @@ body {
   align-items: center;
   gap: var(--space-3);
   flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .page-content {
@@ -461,6 +464,8 @@ body {
   color: var(--text-primary);
   font-family: inherit;
   font-size: 0.92rem;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .auth-layout {
@@ -529,7 +534,7 @@ body {
 
 @media (max-width: 900px) {
   .app-shell {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .sidebar {
     position: static;
@@ -537,7 +542,16 @@ body {
     border-right: none;
     border-bottom: 1px solid var(--border-hairline);
   }
+  .topbar {
+    padding: var(--space-3) var(--space-4);
+  }
+  .page-content {
+    padding: var(--space-4);
+  }
+  .kpi-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .charts-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }

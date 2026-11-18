@@ -9,16 +9,24 @@ def _client() -> TestClient:
 
 
 def test_health_is_ok() -> None:
-    response = _client().get("/api/v1/health")
+    client = _client()
+    response = client.get("/api/v1/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+    root_res = client.get("/health")
+    assert root_res.status_code == 200
+    assert root_res.json() == {"status": "ok"}
 
 
 def test_ready_ok_when_database_answers(monkeypatch) -> None:
     monkeypatch.setattr(db_session, "ping_database", lambda: None)
-    response = _client().get("/api/v1/ready")
+    client = _client()
+    response = client.get("/api/v1/ready")
     assert response.status_code == 200
     assert response.json() == {"status": "ready", "database": "ok"}
+    root_ready = client.get("/ready")
+    assert root_ready.status_code == 200
+    assert root_ready.json() == {"status": "ready", "database": "ok"}
 
 
 def test_ready_503_when_database_unreachable(monkeypatch) -> None:

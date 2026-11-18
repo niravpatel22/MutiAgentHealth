@@ -1,6 +1,9 @@
 """Shared pytest fixtures for Phase 1+ backend tests."""
 
+import os
+import tempfile
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -13,6 +16,18 @@ from app.core.rate_limit import limiter
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import create_app
+
+os.environ.setdefault("CREWAI_DISABLE_TELEMETRY", "true")
+os.environ.setdefault("CREWAI_TRACING_ENABLED", "false")
+os.environ.setdefault("OTEL_SDK_DISABLED", "true")
+_local_app_data = os.environ.get("LOCALAPPDATA")
+if _local_app_data:
+    try:
+        (Path(_local_app_data) / "crewai" / "credentials").mkdir(parents=True, exist_ok=True)
+    except OSError:
+        os.environ["LOCALAPPDATA"] = tempfile.gettempdir()
+else:
+    os.environ.setdefault("XDG_DATA_HOME", tempfile.gettempdir())
 
 TEST_JWT_SECRET = "test-secret-key-with-at-least-32-characters-long!"
 

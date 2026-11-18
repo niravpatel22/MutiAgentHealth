@@ -1,0 +1,156 @@
+{
+  "checks": [
+    {
+      "check": "Protected route redirect to /login when unauthenticated",
+      "status": "PASS",
+      "evidence": "pathname=/login"
+    },
+    {
+      "check": "Product identity on Login screen",
+      "status": "PASS",
+      "evidence": "Verified title and subtitle on /login"
+    },
+    {
+      "check": "Invalid login displays helpful error alert",
+      "status": "PASS",
+      "evidence": "Alert role rendered: 'Invalid email or password'"
+    },
+    {
+      "check": "Zero tokens stored in localStorage or sessionStorage",
+      "status": "PASS",
+      "evidence": "localStorage keys=[], sessionStorage keys=[]"
+    },
+    {
+      "check": "Dashboard renders all 9 KPI cards & 7 Recharts charts from backend API",
+      "status": "PASS",
+      "evidence": "KPI Info buttons=9, Recharts SVGs=22"
+    },
+    {
+      "check": "Dashboard accessible Table View fallback & KPI Info popover work",
+      "status": "PASS",
+      "evidence": "Table view buttons=7, fallback table rendered=True"
+    },
+    {
+      "check": "Dashboard month range filter updates KPIs dynamically (2026-05 to 2026-07 -> 1,238 appointments)",
+      "status": "PASS",
+      "evidence": "Verified 1,238 appointments displayed"
+    },
+    {
+      "check": "Business Profile form saves and displays toast confirmation",
+      "status": "PASS",
+      "evidence": "Toast: 'Business profile saved'"
+    },
+    {
+      "check": "Dataset Quality Report displays 7,100 rows, 0 quarantined, 40/60/90 derived dimensions, and duplicate_batch_no warning",
+      "status": "PASS",
+      "evidence": "Verified 7,100 loaded, 0 quarantined, duplicate_batch_no warning"
+    },
+    {
+      "check": "Analysis Monitor displays all 6 CrewAI agents, context_from chaining, tool calls, and outputs",
+      "status": "PASS",
+      "evidence": "All 6 agents completed with expandable context & tool logs"
+    },
+    {
+      "check": "Reports page renders APPROVED verdict, 8 sections, clickable metric evidence inspector, and PDF download",
+      "status": "PASS",
+      "evidence": "Verified 8 sections, metric inspector, and PDF download toast"
+    },
+    {
+      "check": "HITL Approvals: Manager approves one recommendation, rejects another, and immutable Approval History updates",
+      "status": "PASS",
+      "evidence": "Both approval and rejection persisted with comments in Approval History"
+    },
+    {
+      "check": "AI Chat answers dataset-supported question with cited_metric_keys and refuses unsupported marketing ROI question honestly",
+      "status": "PASS",
+      "evidence": "Cited finance.net_revenue & finance.approved_margin; refused marketing ROI trap"
+    },
+    {
+      "check": "History page displays completed analysis runs, verdicts, and PDF download actions",
+      "status": "PASS",
+      "evidence": "Verified run history table"
+    },
+    {
+      "check": "Browser page reload preserves session via httpOnly refresh cookie without breaking navigation",
+      "status": "PASS",
+      "evidence": "Session restored on reload"
+    },
+    {
+      "check": "Viewport layout & zero horizontal overflow at Desktop (1440x900)",
+      "status": "PASS",
+      "evidence": "scrollWidth=1425 <= innerWidth=1440"
+    },
+    {
+      "check": "Viewport layout & zero horizontal overflow at Laptop (1366x768)",
+      "status": "PASS",
+      "evidence": "scrollWidth=1351 <= innerWidth=1366"
+    },
+    {
+      "check": "Viewport layout & zero horizontal overflow at Tablet (768x1024)",
+      "status": "PASS",
+      "evidence": "scrollWidth=753 <= innerWidth=768"
+    },
+    {
+      "check": "Viewport layout & zero horizontal overflow at Mobile (390x844)",
+      "status": "PASS",
+      "evidence": "scrollWidth=375 <= innerWidth=390"
+    },
+    {
+      "check": "Scenario B (Analyst UI): Analyst can view Dashboard, Datasets, Reports, Approvals (read-only), and AI Chat, while Upload and Approve buttons are hidden",
+      "status": "PASS",
+      "evidence": "Upload card hidden on /datasets; 'Read-only view' shown on /approvals"
+    },
+    {
+      "check": "Scenario B (Analyst Backend Enforcement): Backend denies Analyst upload (403), approval (403), and cross-user dataset access (404)",
+      "status": "PASS",
+      "evidence": "{\"uploadStatus\": 403, \"approveStatus\": 403, \"idorStatus\": 404}"
+    },
+    {
+      "check": "Scenario C (Admin Console): Displays Users & RBAC table, updates user role with persistence toast, and displays All Analysis Runs & All Generated BI Reports",
+      "status": "PASS",
+      "evidence": "Verified all 3 governance tables and live role update persistence on /admin"
+    },
+    {
+      "check": "Zero uncaught page exceptions or 5xx API failures during entire browser E2E suite",
+      "status": "PASS",
+      "evidence": "page_exceptions=0, 5xx_requests=0"
+    }
+  ],
+  "viewports": {
+    "Desktop (1440x900)": {
+      "scrollWidth": 1425,
+      "innerWidth": 1440,
+      "no_horizontal_overflow": true
+    },
+    "Laptop (1366x768)": {
+      "scrollWidth": 1351,
+      "innerWidth": 1366,
+      "no_horizontal_overflow": true
+    },
+    "Tablet (768x1024)": {
+      "scrollWidth": 753,
+      "innerWidth": 768,
+      "no_horizontal_overflow": true
+    },
+    "Mobile (390x844)": {
+      "scrollWidth": 375,
+      "innerWidth": 390,
+      "no_horizontal_overflow": true
+    }
+  },
+  "screenshots": [
+    "c:\\Users\\Administrator\\Desktop\\MultiAgents\\audit\\screenshots\\login.png",
+    "c:\\Users\\Administrator\\Desktop\\MultiAgents\\audit\\screenshots\\dashboard.png",
+    "c:\\Users\\Administrator\\Desktop\\MultiAgents\\audit\\screenshots\\dataset_upload.png",
+    "c:\\Users\\Administrator\\Desktop\\MultiAgents\\audit\\screenshots\\dataset_quality_report.png",
+    "c:\\Users\\Administrator\\Desktop\\MultiAgents\\audit\\screenshots\\analysis_monitor.png",
+    "c:\\Users\\Administrator\\Desktop\\MultiAgents\\audit\\screenshots\\report_details.png",
+    "c:\\Users\\Administrator\\Desktop\\MultiAgents\\audit\\screenshots\\approvals.png",
+    "c:\\Users\\Administrator\\Desktop\\MultiAgents\\audit\\screenshots\\ai_chat.png",
+    "c:\\Users\\Administrator\\Desktop\\MultiAgents\\audit\\screenshots\\mobile_layout.png",
+    "c:\\Users\\Administrator\\Desktop\\MultiAgents\\audit\\screenshots\\admin.png"
+  ],
+  "console_errors": [],
+  "page_exceptions": [],
+  "failed_requests_5xx": []
+}

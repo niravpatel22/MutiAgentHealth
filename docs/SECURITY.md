@@ -1,4 +1,4 @@
-# Security — CareOps Intelligence
+# Security — MediOps Intelligence
 
 ## 1. Threat Model Summary
 

@@ -182,6 +182,13 @@ def test_security_headers_request_guards_and_error_envelope(client: TestClient) 
 
 
 def test_cli_seed_admin(monkeypatch, db_session: Session, test_settings: Settings) -> None:
+    import pytest
+    from pydantic import ValidationError
+
+    bad_settings = test_settings.model_copy(update={"admin_email": "admin@careops.local"})
+    with pytest.raises(ValidationError):
+        auth_service.seed_admin(db_session, bad_settings)
+
     monkeypatch.setattr("app.cli.get_settings", lambda: test_settings)
     monkeypatch.setattr("app.cli.get_sessionmaker", lambda: lambda: db_session)
     assert cli_main(["seed-admin"]) == 0
