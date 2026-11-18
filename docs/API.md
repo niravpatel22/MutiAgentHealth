@@ -27,3 +27,8 @@ The interactive OpenAPI documentation is served by the backend at **`/docs`**
 | PUT | `/api/v1/business-profile` | Any signed-in | Create or update own business profile |
 | GET | `/api/v1/admin/users` | `admin` | Paginated list of users |
 | PATCH | `/api/v1/admin/users/{user_id}` | `admin` | Update user role or active flag |
+| POST | `/api/v1/datasets` | `manager`, `admin` | Upload `.xlsx` or 5 `.csv` files, validate, clean, and load |
+| GET | `/api/v1/datasets` | Any signed-in | Paginated list of own datasets (all for `admin`) |
+| GET | `/api/v1/datasets/{id}` | Owner or `admin` | Dataset metadata and quality report |
+| GET | `/api/v1/datasets/{id}/quality-report` | Owner or `admin` | Detailed ingestion quality report |
+| DELETE | `/api/v1/datasets/{id}` | Owner (`manager`) or `admin` | Delete dataset and cascade domain rows |

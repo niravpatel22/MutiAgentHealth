@@ -2,7 +2,13 @@
 
 > Threat model summary and tested controls (updated each phase; finalized in Phase 7).
 
-## Controls in place (through Phase 1)
+## Controls in place (through Phase 2)
+
+- **Upload Hardening & PII Protection:**
+  - Accepts only `.xlsx` (OOXML zip magic-byte check, rejects `vbaProject.bin` / `.xlsm` macros and zip-bombs > 50 MB uncompressed, opened in `openpyxl` `read_only=True, data_only=True` mode with zero formula evaluation) or the 5 entity `.csv` files (rejects binary magic bytes and null bytes).
+  - Enforces upload size (`MAX_UPLOAD_MB=10`) and row (`MAX_UPLOAD_ROWS=100,000`) caps.
+  - Phone numbers are masked at ingestion time (`******` + last 4 digits) before storage, and `patient_name` is never exposed by any API response or log.
+  - Out-of-period dates, negative amounts, `net_amount != gross - discount`, duplicate PKs, and orphan FKs are quarantined with structured reasons in `datasets.quality_report`.
 
 - **Passwords:** hashed with `argon2id` (`argon2-cffi`); constant-time verification including a
   pre-computed dummy hash on unknown emails so login timing never leaks account existence;
