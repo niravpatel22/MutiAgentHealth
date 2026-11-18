@@ -1,0 +1,11 @@
+flowchart LR
+  U["Browser (React 18 + Vite)"] -->|"HTTPS · JWT + httpOnly Refresh Cookie"| API["FastAPI Backend (/api/v1)"]
+  API -->|"SQLAlchemy 2.0 · psycopg 3"| DB[("PostgreSQL 16+")]
+  API -->|"Deterministic Queries"| ME["Metrics Engine (metrics/registry.py)"]
+  ME --> DB
+  W["Job Worker (python -m app.worker)"] -->|"SELECT ... FOR UPDATE SKIP LOCKED"| DB
+  W --> CREW["CrewAI Sequential Crew (6 Agents)"]
+  CREW -->|"Read-only Dataset-Scoped Tools"| ME
+  CREW -->|"Layer 1: Deterministic Verifier"| VER["verifier.py"]
+  VER --> ME
+  CREW -->|"Aggregates Only (Zero PII)"| LLM["LLM Provider (Gemini / OpenAI / Claude)"]
