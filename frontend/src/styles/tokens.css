@@ -4,11 +4,13 @@
    ========================================================================== */
 
 :root {
-  /* Neutral Slate Scale (Light) */
+  /* Restrained Teal, Navy, White & Neutral-Grey Palette (Light) */
   --bg-canvas: #f8fafc;
   --bg-surface: #ffffff;
   --bg-subtle: #f1f5f9;
   --bg-elevated: #ffffff;
+  --bg-navy: #0f172a;
+  --bg-navy-elevated: #1e293b;
 
   --text-primary: #0f172a;
   --text-secondary: #334155;
@@ -145,8 +147,9 @@ body {
 }
 
 .sidebar {
-  background: var(--bg-surface);
-  border-right: 1px solid var(--border-hairline);
+  background: var(--bg-navy);
+  color: #f8fafc;
+  border-right: 1px solid var(--bg-navy-elevated);
   padding: var(--space-5) var(--space-4);
   display: flex;
   flex-direction: column;
@@ -162,13 +165,13 @@ body {
   gap: var(--space-3);
   font-weight: 700;
   font-size: 1.05rem;
-  color: var(--text-primary);
+  color: inherit;
   text-decoration: none;
 }
 
 .brand-mark {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-sm);
   background: var(--accent-primary);
   color: #ffffff;
@@ -176,7 +179,17 @@ body {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+}
+
+.brand-subtitle {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #94a3b8;
+  line-height: 1.25;
+  margin-top: 2px;
 }
 
 .nav-list {
@@ -194,7 +207,7 @@ body {
   gap: var(--space-3);
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  color: var(--text-secondary);
+  color: #cbd5e1;
   text-decoration: none;
   font-weight: 500;
   font-size: 0.92rem;
@@ -204,13 +217,13 @@ body {
 }
 
 .nav-link:hover {
-  background: var(--bg-subtle);
-  color: var(--text-primary);
+  background: var(--bg-navy-elevated);
+  color: #ffffff;
 }
 
 .nav-link[aria-current='page'] {
-  background: var(--accent-soft);
-  color: var(--accent-text);
+  background: var(--accent-primary);
+  color: #ffffff;
   font-weight: 600;
 }
 

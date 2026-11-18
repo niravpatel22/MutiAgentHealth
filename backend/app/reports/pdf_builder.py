@@ -131,8 +131,8 @@ def build_report_pdf(
         rightMargin=16 * mm,
         topMargin=16 * mm,
         bottomMargin=16 * mm,
-        title="CareOps Intelligence — Business Intelligence Report",
-        author="CareOps Intelligence",
+        title="MediOps Intelligence — Business Intelligence Report",
+        author="MediOps Intelligence",
     )
 
     base_styles = getSampleStyleSheet()
@@ -184,7 +184,7 @@ def build_report_pdf(
     # ---- Cover Header ----
     story.append(
         Paragraph(
-            "CareOps Intelligence — Hospital Operations &amp; Performance Report",
+            "MediOps Intelligence — AI-Powered Hospital Operations &amp; Performance Intelligence.",
             title_style,
         )
     )

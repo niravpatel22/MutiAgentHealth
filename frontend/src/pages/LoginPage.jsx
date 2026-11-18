@@ -35,15 +35,15 @@ export default function LoginPage() {
       <div className="card auth-card">
         <div className="brand" style={{ marginBottom: '16px' }}>
           <span className="brand-mark" aria-hidden="true">
-            CO
+            MO
           </span>
-          <span>CareOps Intelligence</span>
+          <span>MediOps Intelligence</span>
         </div>
         <h1 className="page-title" style={{ fontSize: '1.3rem', marginBottom: '4px' }}>
-          Sign in to your workspace
+          Sign in to MediOps Intelligence
         </h1>
         <p className="page-subtitle" style={{ marginBottom: '20px' }}>
-          Hospital Operations &amp; Performance Intelligence
+          AI-Powered Hospital Operations &amp; Performance Intelligence.
         </p>
 
         {error && (

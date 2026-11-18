@@ -36,11 +36,17 @@ export default function RegisterPage() {
   return (
     <main className="auth-layout">
       <div className="card auth-card">
+        <div className="brand" style={{ marginBottom: '16px' }}>
+          <span className="brand-mark" aria-hidden="true">
+            MO
+          </span>
+          <span>MediOps Intelligence</span>
+        </div>
         <h1 className="page-title" style={{ fontSize: '1.3rem', marginBottom: '4px' }}>
           Create a Manager Account
         </h1>
         <p className="page-subtitle" style={{ marginBottom: '20px' }}>
-          Set up your Hospital Operations Intelligence workspace
+          AI-Powered Hospital Operations &amp; Performance Intelligence.
         </p>
 
         {error && (
