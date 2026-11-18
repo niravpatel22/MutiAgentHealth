@@ -6,6 +6,8 @@ import KpiCard from '../src/components/KpiCard.jsx';
 import { AuthProvider } from '../src/features/auth/AuthContext.jsx';
 import RequireAuth from '../src/features/auth/RequireAuth.jsx';
 import { ApprovalCard } from '../src/pages/ApprovalsPage.jsx';
+import LoginPage from '../src/pages/LoginPage.jsx';
+import RegisterPage from '../src/pages/RegisterPage.jsx';
 import { formatCompactINR, formatINR } from '../src/utils/format.js';
 
 describe('INR and metric formatters', () => {
@@ -200,5 +202,30 @@ describe('ApprovalCard HITL flow', () => {
     );
     expect(screen.queryByRole('button', { name: 'Approve Proposal' })).not.toBeInTheDocument();
     expect(screen.getByText(/Read-only view/i)).toBeInTheDocument();
+  });
+});
+
+describe('MediOps Intelligence product identity & auth screens', () => {
+  it('renders MediOps Intelligence branding, subtitle, and inline validation on Login and Register', () => {
+    render(
+      <AuthProvider initialUser={null} skipBootstrap>
+        <MemoryRouter initialEntries={['/login']}>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+          </Routes>
+        </MemoryRouter>
+      </AuthProvider>,
+    );
+
+    expect(
+      screen.getByRole('heading', { name: 'Sign in to MediOps Intelligence' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('AI-Powered Hospital Operations & Performance Intelligence.'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Please enter both email and password.');
   });
 });

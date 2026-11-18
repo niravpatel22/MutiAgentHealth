@@ -14,7 +14,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     # ---- application ----
-    app_name: str = "CareOps Intelligence"
+    app_name: str = "MediOps Intelligence"
+    app_subtitle: str = "AI-Powered Hospital Operations & Performance Intelligence."
     app_env: Literal["development", "test", "production"] = "development"
     log_level: str = "INFO"
     api_v1_prefix: str = "/api/v1"

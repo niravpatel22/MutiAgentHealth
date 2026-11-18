@@ -38,9 +38,14 @@ export default function AppShell() {
       <aside className="sidebar" aria-label="Primary navigation">
         <NavLink to="/dashboard" className="brand">
           <span className="brand-mark" aria-hidden="true">
-            CO
+            MO
           </span>
-          <span>CareOps Intelligence</span>
+          <span>
+            MediOps Intelligence
+            <span className="brand-subtitle">
+              AI-Powered Hospital Operations &amp; Performance Intelligence.
+            </span>
+          </span>
         </NavLink>
 
         <nav>

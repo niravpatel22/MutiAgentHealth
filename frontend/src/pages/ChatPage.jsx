@@ -185,7 +185,7 @@ export default function ChatPage() {
               }}
             >
               <div style={{ fontSize: '0.75rem', fontWeight: 600, marginBottom: '4px' }}>
-                {m.role === 'user' ? 'You' : 'CareOps Q&A Agent'}
+                {m.role === 'user' ? 'You' : 'MediOps Q&A Agent'}
               </div>
               <div style={{ whiteSpace: 'pre-wrap', fontSize: '0.92rem' }}>{m.content}</div>
               {m.cited_metric_keys?.length > 0 && (
