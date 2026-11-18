@@ -1,11 +1,25 @@
 """FastAPI application factory."""
 
+import re
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.responses import HTMLResponse
+from slowapi.errors import RateLimitExceeded
 
 from app.api.v1 import api_router
 from app.core.config import Settings, get_settings
+from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging
+from app.core.middleware import (
+    RequestContextMiddleware,
+    RequestGuardMiddleware,
+    SecurityHeadersMiddleware,
+    docs_csp,
+    new_nonce,
+)
+from app.core.rate_limit import limiter, rate_limit_handler
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -20,11 +34,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "All figures are computed by a deterministic metrics engine; "
             "AI agents only interpret aggregates."
         ),
-        docs_url="/docs",
+        docs_url=None,  # served below with a per-request CSP nonce (no unsafe-inline scripts)
         redoc_url=None,
         openapi_url="/openapi.json",
     )
 
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
+    register_exception_handlers(app)
+
+    # Order: outermost runs first on request, last on response.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -32,6 +51,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
         allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
     )
+    app.add_middleware(RequestGuardMiddleware, max_bytes=settings.max_request_bytes)
+    app.add_middleware(SecurityHeadersMiddleware, hsts=True)
+    app.add_middleware(RequestContextMiddleware)
+
+    @app.get("/docs", include_in_schema=False)
+    def swagger_ui() -> HTMLResponse:
+        nonce = new_nonce()
+        raw = get_swagger_ui_html(openapi_url="/openapi.json", title=f"{settings.app_name} — API")
+        html = re.sub(r"<script(?![^>]*\bsrc=)", f'<script nonce="{nonce}"', raw.body.decode())
+        return HTMLResponse(html, headers={"Content-Security-Policy": docs_csp(nonce)})
 
     app.include_router(api_router, prefix=settings.api_v1_prefix)
     return app
