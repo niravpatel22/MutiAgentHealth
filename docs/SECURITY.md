@@ -1,22 +1,41 @@
 # Security
 
-> Stub (Phase 0). Threat model summary and the tested-controls list are completed in Phase 7.
+> Threat model summary and tested controls (updated each phase; finalized in Phase 7).
 
-## Controls in place (Phase 0)
+## Controls in place (through Phase 1)
 
-- `.env` files are git-ignored; `.env.example` documents every variable with no real values.
-- gitleaks runs as a pre-commit hook and in CI over the full Git history.
-- Dependencies are locked (`backend/uv.lock`, `frontend/package-lock.json`) and audited in CI
-  (`pip-audit`, `npm audit`); see `DECISIONS.md` D-016 for the dev-tooling exception.
-- Backend container runs as a non-root user (uid 10001) on `python:3.12-slim` with no secrets baked in.
-- CORS uses an explicit allowlist from `CORS_ORIGINS`.
+- **Passwords:** hashed with `argon2id` (`argon2-cffi`); constant-time verification including a
+  pre-computed dummy hash on unknown emails so login timing never leaks account existence;
+  policy requires 12-128 chars, rejects bundled common/breached passwords, repetitive or sequential
+  strings, and passwords containing the user's email local-part.
+- **JWT & Session Management:** 15-minute HS256 access tokens kept in memory only, with explicit
+  validation of `exp`, `iat`, `nbf`, `iss`, `aud`, `sub`, `jti`, and `typ=access`. Refresh tokens
+  are 256-bit random values stored server-side only as SHA-256 hashes in rotation families
+  (`refresh_tokens` table) and sent in an `httpOnly`, `Secure`, `SameSite=Strict` cookie scoped to
+  `/api/v1/auth`. Presenting an already-rotated refresh token immediately revokes the entire token
+  family (reuse detection).
+- **RBAC & Object-Level Authorization:** roles `admin`, `manager`, `analyst` are enforced in FastAPI
+  dependencies (`app/api/deps.py`) and re-read from the database on every request so deactivation or
+  demotion takes effect immediately. Non-owners receive `404 Not Found` (not `403`) via
+  `ensure_owner_or_admin` to prevent IDOR enumeration.
+- **Platform & Headers:** strict CORS allowlist (`CORS_ORIGINS`), Origin header verification on
+  cookie-authenticated routes, rate limiting (`slowapi`, stricter `10/minute` on `/auth/*`),
+  `Content-Security-Policy` without `unsafe-inline` for scripts (Swagger UI uses a per-request
+  cryptographic nonce), `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`,
+  `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, request size limits (413), Content-Type
+  enforcement (415), and a single error envelope that never leaks stack traces or secret input
+  values.
+- **Structured Logging:** `structlog` JSON logs with `request_id` correlation and automatic
+  redaction of sensitive keys (`password`, `secret`, `token`, `authorization`, `cookie`, `api_key`,
+  `phone`, `patient_name`).
+- **Supply Chain & Secrets:** `.env` ignored, gitleaks in pre-commit and CI, locked dependencies
+  (`backend/uv.lock`, `frontend/package-lock.json`), non-root container (`uid 10001`).
 
 ## Planned (by phase)
 
-- Phase 1: argon2id, JWT (15 min access in memory, rotating httpOnly refresh cookie with reuse
-  detection), RBAC + object-level authorization, rate limiting, security headers, error envelope.
-- Phase 2: upload hardening (signature checks, no formula evaluation, size/row caps).
-- Phase 4–6: LLM prompt-injection rules, read-only dataset-scoped tools, aggregates-only context,
+- Phase 2: upload hardening (extension + magic-byte signature checks, no formula evaluation,
+  size/row caps, transactional loading, phone masking).
+- Phase 4-6: LLM prompt-injection rules, read-only dataset-scoped tools, aggregates-only context,
   call caps.
 
 ## Reporting a vulnerability

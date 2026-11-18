@@ -6,7 +6,7 @@
 #>
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('install', 'lint', 'format', 'test', 'api', 'web')]
+    [ValidateSet('install', 'lint', 'format', 'test', 'migrate', 'seed-admin', 'api', 'web')]
     [string]$Task
 )
 
@@ -39,6 +39,8 @@ switch ($Task) {
         Invoke-Step 'backend' { uv run pytest --cov=app -m 'not live_llm' }
         Invoke-Step 'frontend' { npm test }
     }
+    'migrate' { Invoke-Step 'backend' { uv run alembic upgrade head } }
+    'seed-admin' { Invoke-Step 'backend' { uv run python -m app.cli seed-admin } }
     'api' { Invoke-Step 'backend' { uv run uvicorn app.main:app --reload } }
     'web' { Invoke-Step 'frontend' { npm run dev } }
 }

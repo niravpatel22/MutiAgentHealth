@@ -1,10 +1,16 @@
-.PHONY: install lint format test api web up down
+.PHONY: install lint format test migrate seed-admin api web up down
 
 UV ?= uv
 
 install:
 	cd backend && $(UV) sync --frozen
 	cd frontend && npm ci
+
+migrate:
+	cd backend && $(UV) run alembic upgrade head
+
+seed-admin:
+	cd backend && $(UV) run python -m app.cli seed-admin
 
 lint:
 	cd backend && $(UV) run ruff check . && $(UV) run black --check .

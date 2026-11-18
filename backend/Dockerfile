@@ -23,6 +23,8 @@ RUN groupadd --system --gid 10001 app \
     && useradd --system --uid 10001 --gid app --home-dir /app --shell /usr/sbin/nologin app
 WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
+COPY --chown=app:app alembic.ini ./
+COPY --chown=app:app alembic ./alembic
 COPY --chown=app:app app ./app
 USER app
 EXPOSE 8000
