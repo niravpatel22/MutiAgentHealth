@@ -1,6 +1,16 @@
 from fastapi import APIRouter
 
-from app.api.v1 import admin, analyses, analytics, auth, datasets, health, profile
+from app.api.v1 import (
+    admin,
+    analyses,
+    analytics,
+    auth,
+    datasets,
+    health,
+    profile,
+    recommendations,
+    reports,
+)
 
 api_router = APIRouter()
 api_router.include_router(health.router)
@@ -9,4 +19,6 @@ api_router.include_router(profile.router)
 api_router.include_router(datasets.router)
 api_router.include_router(analytics.router)
 api_router.include_router(analyses.router)
+api_router.include_router(reports.router)
+api_router.include_router(recommendations.router)
 api_router.include_router(admin.router)
