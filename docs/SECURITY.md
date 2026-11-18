@@ -1,49 +1,42 @@
-# Security
+# Security — CareOps Intelligence
 
-> Threat model summary and tested controls (updated each phase; finalized in Phase 7).
+## 1. Threat Model Summary
 
-## Controls in place (through Phase 2)
+| Threat Category | Attack Vector | Mitigation Implemented & Tested |
+|---|---|---|
+| **Credential Stuffing & Brute Force** | Automated password guessing on `/auth/login`, weak user passwords | `argon2id` hashing (`argon2-cffi`), constant-time verification with pre-computed dummy hash on unknown emails, 12–128 char policy + offline breached-password list (`common_passwords.txt`), email-substring rejection, `slowapi` rate limit (`10/minute` on `/auth/*`) |
+| **Token Theft & Session Hijacking** | XSS reading tokens from `localStorage`, stolen refresh cookie replay | 15-minute `HS256` access tokens stored **in memory only** on the client; rotating 256-bit refresh tokens stored as SHA-256 digests in `refresh_tokens` families and sent in `httpOnly`, `Secure`, `SameSite=Strict` cookies scoped to `/api/v1/auth`. Re-using a rotated refresh token revokes the entire token family |
+| **Broken Access Control & IDOR** | `analyst` attempting upload/approval, `manager` probing another manager's dataset/report UUID | Server-side FastAPI dependencies (`CurrentUser`, `ManagerOrAdmin`, `AdminUser`) re-read role and `is_active` from PostgreSQL on every request. `ensure_owner_or_admin` returns `404 Not Found` (never `403`) on non-owners to prevent resource enumeration |
+| **Malicious File Upload** | Macro-infected Excel (`.xlsm` / `vbaProject.bin`), zip bombs, formula injection, binary files disguised as `.csv` | Magic-byte signature verification (`PK\x03\x04`), zip archive inspection rejecting `vbaProject.bin` and uncompressed size > 50 MB, `openpyxl` opened strictly with `read_only=True, data_only=True` (zero formula evaluation), upload caps (`10 MB`, `100,000 rows`) |
+| **PII & Secret Exposure** | Patient names or phone numbers sent to LLM, API responses, or logs; API keys committed to Git | Phone numbers masked at ingestion (`******` + last 4 digits); agents only access aggregate metrics tools; `structlog` processor automatically redacts sensitive keys (`password`, `secret`, `token`, `api_key`, `phone`, `patient_name`); `.env` ignored and `gitleaks` enforced in pre-commit and CI |
+| **LLM Hallucination & Prompt Injection** | Dataset text hijacking agent prompts, LLM inventing numbers or marketing ROI | Tool outputs wrapped in `<tool_output>...</tool_output>` delimiters; `dataset_id` bound server-side (not an LLM argument); `MAX_LLM_CALLS_PER_ANALYSIS=40` cap; two-layer verification (deterministic `verifier.py` recomputing every cited `metric_key` and scanning narrative text for unbacked numbers + Verification Agent); LLM output rendered as text (never raw HTML) |
+| **Uncontrolled Autonomous Action** | AI agents automatically changing budgets, orders, or staffing | Mandatory Human-in-the-Loop (HITL): recommendations from approved reports with `requires_approval=True` are created as `pending_approval`; only `manager`/`admin` can decide; decisions are recorded in `approval_history` (`execution_mode: recorded_decision_only`) |
 
-- **Upload Hardening & PII Protection:**
-  - Accepts only `.xlsx` (OOXML zip magic-byte check, rejects `vbaProject.bin` / `.xlsm` macros and zip-bombs > 50 MB uncompressed, opened in `openpyxl` `read_only=True, data_only=True` mode with zero formula evaluation) or the 5 entity `.csv` files (rejects binary magic bytes and null bytes).
-  - Enforces upload size (`MAX_UPLOAD_MB=10`) and row (`MAX_UPLOAD_ROWS=100,000`) caps.
-  - Phone numbers are masked at ingestion time (`******` + last 4 digits) before storage, and `patient_name` is never exposed by any API response or log.
-  - Out-of-period dates, negative amounts, `net_amount != gross - discount`, duplicate PKs, and orphan FKs are quarantined with structured reasons in `datasets.quality_report`.
+---
 
-- **Passwords:** hashed with `argon2id` (`argon2-cffi`); constant-time verification including a
-  pre-computed dummy hash on unknown emails so login timing never leaks account existence;
-  policy requires 12-128 chars, rejects bundled common/breached passwords, repetitive or sequential
-  strings, and passwords containing the user's email local-part.
-- **JWT & Session Management:** 15-minute HS256 access tokens kept in memory only, with explicit
-  validation of `exp`, `iat`, `nbf`, `iss`, `aud`, `sub`, `jti`, and `typ=access`. Refresh tokens
-  are 256-bit random values stored server-side only as SHA-256 hashes in rotation families
-  (`refresh_tokens` table) and sent in an `httpOnly`, `Secure`, `SameSite=Strict` cookie scoped to
-  `/api/v1/auth`. Presenting an already-rotated refresh token immediately revokes the entire token
-  family (reuse detection).
-- **RBAC & Object-Level Authorization:** roles `admin`, `manager`, `analyst` are enforced in FastAPI
-  dependencies (`app/api/deps.py`) and re-read from the database on every request so deactivation or
-  demotion takes effect immediately. Non-owners receive `404 Not Found` (not `403`) via
-  `ensure_owner_or_admin` to prevent IDOR enumeration.
-- **Platform & Headers:** strict CORS allowlist (`CORS_ORIGINS`), Origin header verification on
-  cookie-authenticated routes, rate limiting (`slowapi`, stricter `10/minute` on `/auth/*`),
-  `Content-Security-Policy` without `unsafe-inline` for scripts (Swagger UI uses a per-request
-  cryptographic nonce), `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`,
-  `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, request size limits (413), Content-Type
-  enforcement (415), and a single error envelope that never leaks stack traces or secret input
-  values.
-- **Structured Logging:** `structlog` JSON logs with `request_id` correlation and automatic
-  redaction of sensitive keys (`password`, `secret`, `token`, `authorization`, `cookie`, `api_key`,
-  `phone`, `patient_name`).
-- **Supply Chain & Secrets:** `.env` ignored, gitleaks in pre-commit and CI, locked dependencies
-  (`backend/uv.lock`, `frontend/package-lock.json`), non-root container (`uid 10001`).
+## 2. Security Controls Tested in Automated Suite
 
-## Planned (by phase)
+- [x] `argon2id` roundtrip, dummy-hash constant-time verification, and password policy rejection (`tests/test_security.py`)
+- [x] JWT `exp`, `iss`, `aud`, `sub`, `jti`, and `typ=access` enforcement (`tests/test_security.py`)
+- [x] Refresh token rotation and token-family revocation on reuse detection (`tests/test_auth_api.py`)
+- [x] Origin header check on cookie-authenticated endpoints and `429` rate limiting (`tests/test_auth_api.py`)
+- [x] Full RBAC matrix (`admin`, `manager`, `analyst`, unauthenticated) and admin self-lockout prevention (`tests/test_rbac_and_profile.py`)
+- [x] Cross-user IDOR returning `404` across datasets, quality reports, analytics, analyses, reports, PDFs, recommendations, and chat sessions (`tests/test_ingestion_and_metrics.py`, `tests/test_analytics_api.py`, `tests/test_crew_and_worker.py`, `tests/test_reports_and_hitl.py`, `tests/test_chat_and_admin.py`)
+- [x] Security headers (`Content-Security-Policy` without `unsafe-inline` for scripts, per-request nonce on `/docs`, HSTS, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`) and `415` Content-Type guard (`tests/test_rbac_and_profile.py`)
+- [x] Validation errors strip submitted secret values (`tests/test_rbac_and_profile.py`)
+- [x] Structured JSON log redaction of secrets and PII (`tests/test_security.py`)
+- [x] Macro `.xlsx`, fake zip, binary `.csv`, and oversized upload rejection (`tests/test_ingestion_and_metrics.py`)
+- [x] Deterministic verifier catching mismatched metric values and unbacked numeric claims (`tests/test_crew_and_worker.py`)
+- [x] HITL rule blocking `analyst` approvals (`403`) and blocking pending recommendations on rejected reports (`tests/test_crew_and_worker.py`, `tests/test_reports_and_hitl.py`)
 
-- Phase 2: upload hardening (extension + magic-byte signature checks, no formula evaluation,
-  size/row caps, transactional loading, phone masking).
-- Phase 4-6: LLM prompt-injection rules, read-only dataset-scoped tools, aggregates-only context,
-  call caps.
+---
 
-## Reporting a vulnerability
+## 3. Supply Chain & Container Hardening
 
-Contact the repository owner privately; do not open a public issue.
+- Dependencies are locked in `backend/uv.lock` and `frontend/package-lock.json` and audited in CI (`pip-audit`, `npm audit --omit=dev`).
+- Backend Docker image (`backend/Dockerfile`) uses a multi-stage build on `python:3.12-slim` and runs as non-root user `app` (`uid 10001`).
+- Frontend Docker image (`frontend/Dockerfile`) runs on `nginxinc/nginx-unprivileged` (`uid 101`).
+
+## 4. Reporting a Vulnerability
+
+Report security issues privately to the repository owner; do not open a public issue.
