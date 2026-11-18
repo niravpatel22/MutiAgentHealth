@@ -12,6 +12,8 @@ const DashboardPage = lazy(() => import('../pages/DashboardPage.jsx'));
 const DatasetsPage = lazy(() => import('../pages/DatasetsPage.jsx'));
 const BusinessProfilePage = lazy(() => import('../pages/BusinessProfilePage.jsx'));
 const AnalysesPage = lazy(() => import('../pages/AnalysesPage.jsx'));
+const ReportsPage = lazy(() => import('../pages/ReportsPage.jsx'));
+const ApprovalsPage = lazy(() => import('../pages/ApprovalsPage.jsx'));
 const PlaceholderPage = lazy(() => import('../pages/PlaceholderPage.jsx'));
 
 const defaultQueryClient = new QueryClient({
@@ -48,14 +50,8 @@ export function AppRoutes() {
           <Route path="/datasets" element={<DatasetsPage />} />
           <Route path="/profile" element={<BusinessProfilePage />} />
           <Route path="/analyses" element={<AnalysesPage />} />
-          <Route
-            path="/reports"
-            element={<PlaceholderPage title="Verified BI Reports & PDF Export" phase="Phase 5" />}
-          />
-          <Route
-            path="/approvals"
-            element={<PlaceholderPage title="Human-in-the-Loop Approvals" phase="Phase 5" />}
-          />
+          <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/approvals" element={<ApprovalsPage />} />
           <Route
             path="/chat"
             element={<PlaceholderPage title="Grounded Business Q&A Chat" phase="Phase 6" />}

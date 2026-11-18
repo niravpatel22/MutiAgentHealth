@@ -40,3 +40,9 @@ The interactive OpenAPI documentation is served by the backend at **`/docs`**
 | GET | `/api/v1/analyses/{id}` | Owner or `admin` | Run status, revision count, verdict, and per-agent pipeline state |
 | GET | `/api/v1/analyses/{id}/agents` | Owner or `admin` | Detailed per-agent execution logs (`context_from`, `tool_calls`, `output`) |
 | POST | `/api/v1/analyses/{id}/cancel` | Owner (`manager`) or `admin` | Cancel a queued or running analysis |
+| GET | `/api/v1/reports` | Any signed-in | Paginated list of generated BI reports |
+| GET | `/api/v1/reports/{id}` | Owner or `admin` | Full report (8 sections, findings, verification appendix, recommendations) |
+| GET | `/api/v1/reports/{id}/pdf` | Owner or `admin` | Download reproducible executive PDF report |
+| GET | `/api/v1/recommendations` | Any signed-in | Paginated list of HITL recommendations (`?status=&report_id=`) |
+| GET | `/api/v1/recommendations/{id}` | Owner or `admin` | Recommendation detail, evidence metrics, and approval history |
+| POST | `/api/v1/recommendations/{id}/decision` | `manager`, `admin` | Record an `approved` or `rejected` decision with comment (`analyst` forbidden) |
