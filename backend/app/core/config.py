@@ -50,6 +50,8 @@ class Settings(BaseSettings):
     rate_limit_default: str = "120/minute"
     rate_limit_auth: str = "10/minute"
     max_request_mb: int = Field(default=11, ge=1, le=50)
+    max_upload_mb: int = Field(default=10, ge=1, le=50)
+    max_upload_rows: int = Field(default=100_000, ge=100, le=500_000)
 
     @field_validator("database_url", mode="before")
     @classmethod
