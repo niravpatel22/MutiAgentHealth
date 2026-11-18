@@ -2,6 +2,28 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthContext.jsx';
 
+const DEMO_ACCOUNTS = [
+  {
+    role: 'Manager',
+    email: 'e2e.manager@mediops.example',
+    password: 'Sunrise#Ward99!Ops',
+    summary:
+      'Full workflow: Upload, Dashboard, 6-Agent Analysis, Reports, PDF, HITL Approvals, Chat',
+  },
+  {
+    role: 'Admin',
+    email: 'admin@mediops.example',
+    password: 'Admin#MediOps2026!',
+    summary: 'Admin Console (/admin): User & Role RBAC Management, All Analyses & Reports',
+  },
+  {
+    role: 'Analyst',
+    email: 'audit.analyst@mediops.example',
+    password: 'Analyst#MediOps2026!',
+    summary: 'Read-only access: Dashboard, Reports & Grounded AI Chat (403 on Upload/Approval)',
+  },
+];
+
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -10,6 +32,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const handleQuickFill = (acct) => {
+    setError(null);
+    setEmail(acct.email);
+    setPassword(acct.password);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -101,6 +129,37 @@ export default function LoginPage() {
             {submitting ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+
+        <section
+          aria-label="Quick-fill demo role credentials"
+          className="kpi-tooltip"
+          style={{ marginTop: '18px', padding: '12px' }}
+        >
+          <div style={{ fontWeight: 700, fontSize: '0.82rem', marginBottom: '8px' }}>
+            Quick-Fill Demo Role Credentials (Pre-Seeded with 01_Healthcare.xlsx):
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
+            {DEMO_ACCOUNTS.map((acct) => (
+              <button
+                key={acct.role}
+                type="button"
+                className="btn btn-secondary"
+                style={{ padding: '5px 10px', fontSize: '0.78rem' }}
+                onClick={() => handleQuickFill(acct)}
+              >
+                Fill {acct.role}
+              </button>
+            ))}
+          </div>
+          <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '0.75rem', lineHeight: 1.45 }}>
+            {DEMO_ACCOUNTS.map((acct) => (
+              <li key={acct.email} style={{ marginBottom: '4px' }}>
+                <strong>{acct.role}:</strong> <code>{acct.email}</code> /{' '}
+                <code>{acct.password}</code>
+              </li>
+            ))}
+          </ul>
+        </section>
 
         <p className="page-subtitle" style={{ marginTop: '16px', textAlign: 'center' }}>
           Need a manager account? <Link to="/register">Create account</Link>

@@ -227,5 +227,16 @@ describe('MediOps Intelligence product identity & auth screens', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(screen.getByRole('alert')).toHaveTextContent('Please enter both email and password.');
+
+    // Quick-fill demo role buttons populate email and password
+    fireEvent.click(screen.getByRole('button', { name: 'Fill Manager' }));
+    expect(screen.getByLabelText('Email address')).toHaveValue('e2e.manager@mediops.example');
+    expect(screen.getByLabelText('Password')).toHaveValue('Sunrise#Ward99!Ops');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Fill Admin' }));
+    expect(screen.getByLabelText('Email address')).toHaveValue('admin@mediops.example');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Fill Analyst' }));
+    expect(screen.getByLabelText('Email address')).toHaveValue('audit.analyst@mediops.example');
   });
 });
