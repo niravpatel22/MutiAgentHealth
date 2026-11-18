@@ -129,3 +129,30 @@ export async function apiRequest(
   }
   return response.json();
 }
+
+export async function apiDownloadBlob(path) {
+  const headers = {};
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+  let response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers,
+  });
+  if (response.status === 401) {
+    const refreshed = await refreshSession();
+    if (refreshed?.access_token) {
+      headers.Authorization = `Bearer ${refreshed.access_token}`;
+      response = await fetch(`${API_BASE_URL}${path}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers,
+      });
+    }
+  }
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+  return response.blob();
+}

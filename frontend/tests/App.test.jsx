@@ -5,6 +5,7 @@ import ChartCard from '../src/components/ChartCard.jsx';
 import KpiCard from '../src/components/KpiCard.jsx';
 import { AuthProvider } from '../src/features/auth/AuthContext.jsx';
 import RequireAuth from '../src/features/auth/RequireAuth.jsx';
+import { ApprovalCard } from '../src/pages/ApprovalsPage.jsx';
 import { formatCompactINR, formatINR } from '../src/utils/format.js';
 
 describe('INR and metric formatters', () => {
@@ -153,5 +154,51 @@ describe('AgentPipeline monitor', () => {
     fireEvent.click(logButtons[0]);
     expect(screen.getByText(/Baseline KPI scan/)).toBeInTheDocument();
     expect(screen.getByText('get_metric')).toBeInTheDocument();
+  });
+});
+
+describe('ApprovalCard HITL flow', () => {
+  const sampleRec = {
+    id: 'rec-1',
+    title: 'Freeze non-clinical equipment spend pending audit',
+    rationale: 'Approved expenses exceed invoiced net revenue.',
+    action_type: 'budget',
+    status: 'pending_approval',
+    evidence_metric_keys: ['finance.net_revenue', 'finance.approved_expenses'],
+    evidence_metrics: [
+      {
+        key: 'finance.net_revenue',
+        value: 22256456.76,
+        unit: 'INR',
+        definition: 'Billing.net_amount sum',
+        basis: 'invoiced_billing_net_amount_only',
+      },
+    ],
+    approval_history: [],
+  };
+
+  it('allows managers to approve or reject with a comment and blocks analysts', () => {
+    const decisions = [];
+    const { rerender } = render(
+      <ApprovalCard
+        rec={sampleRec}
+        canDecide={true}
+        isPending={false}
+        onDecide={(id, dec, comment) => decisions.push({ id, dec, comment })}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText('Governance Decision Comment'), {
+      target: { value: 'Approved for Q4 audit' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Approve Proposal' }));
+    expect(decisions).toEqual([{ id: 'rec-1', dec: 'approved', comment: 'Approved for Q4 audit' }]);
+
+    // Analyst view (`canDecide=false`) hides decision buttons and shows read-only notice
+    rerender(
+      <ApprovalCard rec={sampleRec} canDecide={false} isPending={false} onDecide={() => {}} />,
+    );
+    expect(screen.queryByRole('button', { name: 'Approve Proposal' })).not.toBeInTheDocument();
+    expect(screen.getByText(/Read-only view/i)).toBeInTheDocument();
   });
 });
