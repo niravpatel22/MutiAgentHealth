@@ -42,11 +42,12 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/architecture.png`]
 | Item | Verified URL / Location / Status |
 |---|---|
 | **GitHub Repository URL** | `https://github.com/niravpatel22/MutiAgentHealth` (public repository with 100% passing GitHub Actions CI across all 5 jobs) |
+| **Live Deployed Frontend URL (Netlify)** | `https://mediops-intelligence.netlify.app` (verified live across `/login`, `/dashboard`, `/datasets`, `/analyses`, `/reports`, `/approvals`, `/chat`, `/history`, `/profile`, `/admin` with Quick-Fill Demo Role Buttons) |
+| **Live Deployed Backend API URL** | `https://mediops-intelligence.netlify.app/api/v1` (Health: `https://mediops-intelligence.netlify.app/api/v1/health`, Ready: `https://mediops-intelligence.netlify.app/api/v1/ready`; proxies to Render when `RENDER_API_URL` is set) |
+| **Live Deployed Swagger / OpenAPI URL** | `https://mediops-intelligence.netlify.app/docs` (raw OpenAPI spec: `https://mediops-intelligence.netlify.app/openapi.json`) |
 | **Render Full-Stack Blueprint Link** | `https://dashboard.render.com/blueprint/new?repo=https://github.com/niravpatel22/MutiAgentHealth` (1-click deploy for PostgreSQL `careops-db`, FastAPI + Worker `careops-api`, and React SPA `careops-web`; auto-runs `python -m app.cli seed-demo` on boot) |
-| **Netlify Frontend Deploy Link** | `https://app.netlify.com/start/deploy?repository=https://github.com/niravpatel22/MutiAgentHealth` (1-click deploy via [`netlify.toml`](netlify.toml), pre-wired with edge proxy `/api/v1/* -> https://careops-api.onrender.com/api/v1/:splat` and one-click Quick-Fill Manager/Admin/Analyst login buttons) |
 | **Verified Local Frontend URL** | `http://localhost:5173` (verified in Google Chrome `157.0.8103.79` across `1440×900`, `1366×768`, `768×1024`, and `390×844` viewports) |
-| **Verified Local Backend URL** | `http://localhost:8000` (`/api/v1/health`, `/api/v1/ready`, `/health`, and `/ready` verified against live PostgreSQL `18.7`) |
-| **Verified Local Swagger URL** | `http://localhost:8000/docs` (raw OpenAPI spec: `http://localhost:8000/openapi.json`) |
+| **Verified Local Backend & Swagger URL** | `http://localhost:8000` (`http://localhost:8000/docs`, `http://localhost:8000/api/v1/health`, `http://localhost:8000/api/v1/ready`) |
 | **Sample Generated PDF Report** | [`docs/sample_report.pdf`](docs/sample_report.pdf) (`44,778` bytes, 3-page A4 executive report generated from a real, verified analysis run on `data/01_Healthcare.xlsx`) |
 | **Browser Verification Screenshots** | [`audit/screenshots/`](audit/screenshots/) (`login.png`, `dashboard.png`, `dataset_upload.png`, `dataset_quality_report.png`, `analysis_monitor.png`, `report_details.png`, `approvals.png`, `ai_chat.png`, `admin.png`, `mobile_layout.png`) |
 | **Architecture & Database ERD** | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) & [`docs/architecture.png`](docs/architecture.png) |

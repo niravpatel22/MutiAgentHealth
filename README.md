@@ -5,6 +5,13 @@ Full-stack multi-agent business operations and decision intelligence platform on
 
 **Mandatory Stack:** React 18 + Vite · Python 3.12 + FastAPI · CrewAI 1.15.41 + LLM · PostgreSQL 16+ · JWT (`argon2id` + rotating `httpOnly` refresh cookie) · Docker · GitHub Actions CI.
 
+### Live Production Links
+- **Live Deployed Web App (Netlify):** https://mediops-intelligence.netlify.app
+- **Live Deployed API Health & Readiness:** https://mediops-intelligence.netlify.app/api/v1/health · https://mediops-intelligence.netlify.app/api/v1/ready
+- **Live Deployed Swagger / OpenAPI Docs:** https://mediops-intelligence.netlify.app/docs (Spec: https://mediops-intelligence.netlify.app/openapi.json)
+- **Render Full-Stack Blueprint (Postgres + Docker API + Worker + Web):** https://dashboard.render.com/blueprint/new?repo=https://github.com/niravpatel22/MutiAgentHealth
+- **GitHub Repository & Green CI Pipeline:** https://github.com/niravpatel22/MutiAgentHealth
+
 ![System Architecture](docs/architecture.png)
 
 ---

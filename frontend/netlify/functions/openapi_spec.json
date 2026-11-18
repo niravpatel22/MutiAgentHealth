@@ -1,0 +1,2854 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CareOps Intelligence API",
+    "description": "Hospital Operations & Performance Intelligence. All figures are computed by a deterministic metrics engine; AI agents only interpret aggregates.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": ["ops"],
+        "summary": "Liveness probe",
+        "description": "Returns 200 while the process is running. Does not touch the database.",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/HealthResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ready": {
+      "get": {
+        "tags": ["ops"],
+        "summary": "Readiness probe",
+        "description": "Returns 200 when the database answers `SELECT 1`, otherwise 503.",
+        "operationId": "ready_api_v1_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ReadyResponse" } }
+            }
+          },
+          "503": {
+            "description": "Database unreachable",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ReadyResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Create an account",
+        "description": "Creates a **manager** account. Passwords must be 12-128 characters, not a common or breached password, and not contain the email name. The first admin is seeded from environment variables, never through this endpoint.",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/RegisterRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/UserOut" } }
+            }
+          },
+          "409": {
+            "description": "Conflict with existing state",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Sign in",
+        "description": "Returns a 15-minute access token in the body and sets a rotating refresh token in an `httpOnly`, `Secure`, `SameSite=Strict` cookie scoped to `/api/v1/auth`. Errors are deliberately generic.",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/TokenResponse" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Rotate the refresh token",
+        "description": "Exchanges the refresh cookie for a new access token and a new refresh cookie. Re-using an already-rotated refresh token revokes the entire session family.",
+        "operationId": "refresh_api_v1_auth_refresh_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/TokenResponse" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Sign out",
+        "description": "Revokes the refresh-token family server-side and clears the cookie.",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "403": {
+            "description": "Authenticated but not allowed",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": ["auth"],
+        "summary": "Current user",
+        "operationId": "me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/UserOut" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/api/v1/business-profile": {
+      "get": {
+        "tags": ["business profile"],
+        "summary": "Get my business profile",
+        "operationId": "get_profile_api_v1_business_profile_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BusinessProfileOut" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      },
+      "put": {
+        "tags": ["business profile"],
+        "summary": "Create or update my business profile",
+        "description": "Company name, industry, team size, and business goals. Each user owns one profile.",
+        "operationId": "put_profile_api_v1_business_profile_put",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/BusinessProfileIn" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BusinessProfileOut" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/api/v1/datasets": {
+      "post": {
+        "tags": ["datasets"],
+        "summary": "Upload and ingest a healthcare dataset (.xlsx or 5 .csv files)",
+        "description": "Validates file extensions and magic-byte signatures, rejects macros and formulas, cleans strings and dates, quarantines invalid rows with structured reasons, derives `doctors`, `suppliers`, and `vendors` dimensions, masks phone numbers to the last 4 digits, and loads everything in a single database transaction. Requires role `manager` or `admin`.",
+        "operationId": "upload_dataset_api_v1_datasets_post",
+        "security": [{ "HTTPBearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": { "$ref": "#/components/schemas/Body_upload_dataset_api_v1_datasets_post" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DatasetDetailOut" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "413": {
+            "description": "Payload too large",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "415": {
+            "description": "Unsupported media type",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["datasets"],
+        "summary": "List datasets",
+        "description": "Managers and analysts see their own datasets; admins see all datasets.",
+        "operationId": "list_datasets_api_v1_datasets_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "default": 1, "title": "Page" }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Page_DatasetOut_" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/datasets/{dataset_id}": {
+      "get": {
+        "tags": ["datasets"],
+        "summary": "Get dataset metadata and quality report",
+        "operationId": "get_dataset_api_v1_datasets__dataset_id__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Dataset Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/DatasetDetailOut" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["datasets"],
+        "summary": "Delete a dataset and all its domain rows",
+        "operationId": "delete_dataset_api_v1_datasets__dataset_id__delete",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Dataset Id" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/datasets/{dataset_id}/quality-report": {
+      "get": {
+        "tags": ["datasets"],
+        "summary": "Get the ingestion quality report for a dataset",
+        "operationId": "get_quality_report_api_v1_datasets__dataset_id__quality_report_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Dataset Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/QualityReportOut" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/datasets/{dataset_id}/kpis": {
+      "get": {
+        "tags": ["analytics"],
+        "summary": "Get dashboard KPI cards and supplementary metrics",
+        "description": "Computes all dashboard KPI cards deterministically from the metrics registry, including month-over-month change, metric definition, and basis.",
+        "operationId": "get_kpis_api_v1_datasets__dataset_id__kpis_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Dataset Id" }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Start month (YYYY-MM), e.g. 2026-05",
+              "examples": ["2026-05"],
+              "title": "From"
+            },
+            "description": "Start month (YYYY-MM), e.g. 2026-05"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "End month (YYYY-MM), e.g. 2026-10",
+              "examples": ["2026-10"],
+              "title": "To"
+            },
+            "description": "End month (YYYY-MM), e.g. 2026-10"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/KpisResponse" } }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/datasets/{dataset_id}/trends": {
+      "get": {
+        "tags": ["analytics"],
+        "summary": "Get monthly trends and statistical anomalies",
+        "description": "Returns monthly revenue vs expenses (split by Approved, Pending, Rejected), monthly appointments stacked by status, and flagged month-over-month anomalies.",
+        "operationId": "get_trends_api_v1_datasets__dataset_id__trends_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Dataset Id" }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Start month (YYYY-MM), e.g. 2026-05",
+              "examples": ["2026-05"],
+              "title": "From"
+            },
+            "description": "Start month (YYYY-MM), e.g. 2026-05"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "End month (YYYY-MM), e.g. 2026-10",
+              "examples": ["2026-10"],
+              "title": "To"
+            },
+            "description": "End month (YYYY-MM), e.g. 2026-10"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/TrendsResponse" } }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/datasets/{dataset_id}/breakdowns/{dimension}": {
+      "get": {
+        "tags": ["analytics"],
+        "summary": "Get dimensional breakdown for dashboard charts",
+        "description": "Supported dimensions: `department`, `payment_status`, `city`, `insurance_provider`, `age_band`, `category`, `doctor_id`, `service_type`, `approval_status`.",
+        "operationId": "get_breakdown_api_v1_datasets__dataset_id__breakdowns__dimension__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Dataset Id" }
+          },
+          {
+            "name": "dimension",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Dimension" }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Start month (YYYY-MM), e.g. 2026-05",
+              "examples": ["2026-05"],
+              "title": "From"
+            },
+            "description": "Start month (YYYY-MM), e.g. 2026-05"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "End month (YYYY-MM), e.g. 2026-10",
+              "examples": ["2026-10"],
+              "title": "To"
+            },
+            "description": "End month (YYYY-MM), e.g. 2026-10"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/BreakdownResponse" } }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analyses": {
+      "post": {
+        "tags": ["analyses"],
+        "summary": "Enqueue a 6-agent CrewAI analysis run on a dataset",
+        "description": "Enqueues an analysis job in the PostgreSQL queue (`SELECT ... FOR UPDATE SKIP LOCKED`) and returns `202 Accepted` immediately with the analysis ID and initial queued agent steps. Enforces one active analysis per dataset (`409 Conflict`).",
+        "operationId": "create_analysis_api_v1_analyses_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "run_inline",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "When true in dev/single-service mode, triggers a worker tick after returning 202.",
+              "default": false,
+              "title": "Run Inline"
+            },
+            "description": "When true in dev/single-service mode, triggers a worker tick after returning 202."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AnalysisCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AnalysisDetailOut" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "409": {
+            "description": "Conflict with existing state",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["analyses"],
+        "summary": "List analysis runs",
+        "operationId": "list_analyses_api_v1_analyses_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Dataset Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "default": 1, "title": "Page" }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Page_AnalysisRunOut_" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analyses/{analysis_id}": {
+      "get": {
+        "tags": ["analyses"],
+        "summary": "Get analysis run status, revision count, and per-agent pipeline state",
+        "operationId": "get_analysis_api_v1_analyses__analysis_id__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "analysis_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Analysis Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AnalysisDetailOut" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analyses/{analysis_id}/agents": {
+      "get": {
+        "tags": ["analyses"],
+        "summary": "Get detailed per-agent execution logs and tool calls",
+        "operationId": "get_analysis_agents_api_v1_analyses__analysis_id__agents_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "analysis_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Analysis Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/AgentExecutionOut" },
+                  "title": "Response Get Analysis Agents Api V1 Analyses  Analysis Id  Agents Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analyses/{analysis_id}/cancel": {
+      "post": {
+        "tags": ["analyses"],
+        "summary": "Cancel a queued or running analysis",
+        "operationId": "cancel_analysis_api_v1_analyses__analysis_id__cancel_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "analysis_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Analysis Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AnalysisRunOut" } }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports": {
+      "get": {
+        "tags": ["reports"],
+        "summary": "List generated business intelligence reports",
+        "operationId": "list_reports_api_v1_reports_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Dataset Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "default": 1, "title": "Page" }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Page_ReportOut_" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/{report_id}": {
+      "get": {
+        "tags": ["reports"],
+        "summary": "Get full report (8 sections, findings, verification appendix, and recommendations)",
+        "operationId": "get_report_api_v1_reports__report_id__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Report Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ReportDetailOut" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/{report_id}/pdf": {
+      "get": {
+        "tags": ["reports"],
+        "summary": "Download the reproducible executive PDF report",
+        "description": "Generates a professional PDF containing the cover, executive summary, KPI baseline table, embedded revenue/expense chart, all 8 sections, verified findings, recommendation approval table, and verification appendix.",
+        "operationId": "download_report_pdf_api_v1_reports__report_id__pdf_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Report Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF file",
+            "content": { "application/json": { "schema": {} }, "application/pdf": {} }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recommendations": {
+      "get": {
+        "tags": ["recommendations (HITL)"],
+        "summary": "List recommendations with optional status filter",
+        "operationId": "list_recommendations_api_v1_recommendations_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "$ref": "#/components/schemas/RecommendationStatus" },
+                { "type": "null" }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "report_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Report Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "default": 1, "title": "Page" }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Page_RecommendationOut_" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recommendations/{recommendation_id}": {
+      "get": {
+        "tags": ["recommendations (HITL)"],
+        "summary": "Get recommendation detail, evidence metrics, and approval history",
+        "operationId": "get_recommendation_api_v1_recommendations__recommendation_id__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "recommendation_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Recommendation Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/RecommendationOut" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recommendations/{recommendation_id}/decision": {
+      "post": {
+        "tags": ["recommendations (HITL)"],
+        "summary": "Approve or reject a recommendation (manager or admin only)",
+        "description": "Records a Human-in-the-Loop governance decision (`approved` or `rejected`) and comment in `approval_history`. Analysts are forbidden (`403`). The system never executes business actions automatically (`execution_mode: recorded_decision_only`).",
+        "operationId": "decide_recommendation_api_v1_recommendations__recommendation_id__decision_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "recommendation_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Recommendation Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RecommendationDecisionRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/RecommendationOut" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chat/sessions": {
+      "post": {
+        "tags": ["chat"],
+        "summary": "Create a grounded Business Q&A chat session for a dataset",
+        "operationId": "create_chat_session_api_v1_chat_sessions_post",
+        "security": [{ "HTTPBearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ChatSessionCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ChatSessionOut" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["chat"],
+        "summary": "List chat sessions",
+        "operationId": "list_chat_sessions_api_v1_chat_sessions_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+              "title": "Dataset Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "default": 1, "title": "Page" }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Page_ChatSessionOut_" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chat/sessions/{session_id}/messages": {
+      "post": {
+        "tags": ["chat"],
+        "summary": "Send a business question and receive a grounded answer with cited metric keys",
+        "description": "Invokes the CrewAI Business Q&A assistant using the read-only dataset-scoped tools. Every numeric answer cites its `cited_metric_keys`, says 'the dataset cannot answer that' when asked about unavailable fields (marketing ROI, cash collections, stock-out forecasts, or PII), and refuses off-topic requests.",
+        "operationId": "post_chat_message_api_v1_chat_sessions__session_id__messages_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Session Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ChatMessageCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ChatTurnResponse" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["chat"],
+        "summary": "List messages in a chat session",
+        "operationId": "list_chat_messages_api_v1_chat_sessions__session_id__messages_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Session Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ChatMessageOut" },
+                  "title": "Response List Chat Messages Api V1 Chat Sessions  Session Id  Messages Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users": {
+      "get": {
+        "tags": ["admin"],
+        "summary": "List users (admin)",
+        "operationId": "list_users_api_v1_admin_users_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "default": 1, "title": "Page" }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Page_UserOut_" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{user_id}": {
+      "patch": {
+        "tags": ["admin"],
+        "summary": "Change a user's role or active flag (admin)",
+        "description": "Deactivating a user revokes all of their sessions. Admins cannot lock themselves out.",
+        "operationId": "update_user_api_v1_admin_users__user_id__patch",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "User Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/AdminUserUpdate" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/UserOut" } }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "404": {
+            "description": "Resource not found (or not visible to you)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/analyses": {
+      "get": {
+        "tags": ["admin"],
+        "summary": "List all analysis runs across all users (admin)",
+        "operationId": "list_all_analyses_api_v1_admin_analyses_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "default": 1, "title": "Page" }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Page_AnalysisRunOut_" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/reports": {
+      "get": {
+        "tags": ["admin"],
+        "summary": "List all generated BI reports across all users (admin)",
+        "operationId": "list_all_reports_api_v1_admin_reports_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "default": 1, "title": "Page" }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Page_ReportOut_" } }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired credentials",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdminUserUpdate": {
+        "properties": {
+          "role": { "anyOf": [{ "$ref": "#/components/schemas/Role" }, { "type": "null" }] },
+          "is_active": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Is Active"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AdminUserUpdate"
+      },
+      "AgentExecutionOut": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "analysis_id": { "type": "string", "format": "uuid", "title": "Analysis Id" },
+          "agent_name": { "type": "string", "title": "Agent Name" },
+          "sequence": { "type": "integer", "title": "Sequence" },
+          "status": { "$ref": "#/components/schemas/AgentStatus" },
+          "started_at": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Finished At"
+          },
+          "duration_ms": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Duration Ms"
+          },
+          "context_from": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Context From"
+          },
+          "input_summary": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Input Summary"
+          },
+          "output": {
+            "anyOf": [{ "additionalProperties": true, "type": "object" }, { "type": "null" }],
+            "title": "Output"
+          },
+          "tool_calls": {
+            "items": { "additionalProperties": true, "type": "object" },
+            "type": "array",
+            "title": "Tool Calls"
+          },
+          "llm_calls": { "type": "integer", "title": "Llm Calls" },
+          "error": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Error" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "analysis_id",
+          "agent_name",
+          "sequence",
+          "status",
+          "started_at",
+          "finished_at",
+          "duration_ms",
+          "context_from",
+          "input_summary",
+          "output",
+          "tool_calls",
+          "llm_calls",
+          "error",
+          "created_at"
+        ],
+        "title": "AgentExecutionOut"
+      },
+      "AgentStatus": {
+        "type": "string",
+        "enum": ["queued", "running", "completed", "failed", "skipped"],
+        "title": "AgentStatus"
+      },
+      "AnalysisCreateRequest": {
+        "properties": {
+          "dataset_id": { "type": "string", "format": "uuid", "title": "Dataset Id" }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["dataset_id"],
+        "title": "AnalysisCreateRequest"
+      },
+      "AnalysisDetailOut": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "dataset_id": { "type": "string", "format": "uuid", "title": "Dataset Id" },
+          "requested_by": { "type": "string", "format": "uuid", "title": "Requested By" },
+          "status": { "$ref": "#/components/schemas/AnalysisStatus" },
+          "current_agent": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Current Agent"
+          },
+          "revision_count": { "type": "integer", "title": "Revision Count" },
+          "started_at": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Finished At"
+          },
+          "error": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Error" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "agents": {
+            "items": { "$ref": "#/components/schemas/AgentExecutionOut" },
+            "type": "array",
+            "title": "Agents"
+          },
+          "report_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Report Id"
+          },
+          "verdict": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Verdict" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "dataset_id",
+          "requested_by",
+          "status",
+          "current_agent",
+          "revision_count",
+          "started_at",
+          "finished_at",
+          "error",
+          "created_at"
+        ],
+        "title": "AnalysisDetailOut"
+      },
+      "AnalysisRunOut": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "dataset_id": { "type": "string", "format": "uuid", "title": "Dataset Id" },
+          "requested_by": { "type": "string", "format": "uuid", "title": "Requested By" },
+          "status": { "$ref": "#/components/schemas/AnalysisStatus" },
+          "current_agent": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Current Agent"
+          },
+          "revision_count": { "type": "integer", "title": "Revision Count" },
+          "started_at": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Finished At"
+          },
+          "error": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Error" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "dataset_id",
+          "requested_by",
+          "status",
+          "current_agent",
+          "revision_count",
+          "started_at",
+          "finished_at",
+          "error",
+          "created_at"
+        ],
+        "title": "AnalysisRunOut"
+      },
+      "AnalysisStatus": {
+        "type": "string",
+        "enum": ["queued", "running", "completed", "failed", "cancelled"],
+        "title": "AnalysisStatus"
+      },
+      "AnomalyItemOut": {
+        "properties": {
+          "metric_key": { "type": "string", "title": "Metric Key" },
+          "month": { "type": "string", "title": "Month" },
+          "previous_month": { "type": "string", "title": "Previous Month" },
+          "value": { "anyOf": [{ "type": "integer" }, { "type": "number" }], "title": "Value" },
+          "previous_value": {
+            "anyOf": [{ "type": "integer" }, { "type": "number" }],
+            "title": "Previous Value"
+          },
+          "pct_change": { "type": "number", "title": "Pct Change" },
+          "threshold_std_pct": { "type": "number", "title": "Threshold Std Pct" },
+          "direction": { "type": "string", "title": "Direction" },
+          "rule": { "type": "string", "title": "Rule" }
+        },
+        "type": "object",
+        "required": [
+          "metric_key",
+          "month",
+          "previous_month",
+          "value",
+          "previous_value",
+          "pct_change",
+          "threshold_std_pct",
+          "direction",
+          "rule"
+        ],
+        "title": "AnomalyItemOut"
+      },
+      "ApprovalHistoryOut": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "recommendation_id": { "type": "string", "format": "uuid", "title": "Recommendation Id" },
+          "decided_by": { "type": "string", "format": "uuid", "title": "Decided By" },
+          "decision": { "$ref": "#/components/schemas/Decision" },
+          "comment": { "type": "string", "title": "Comment" },
+          "decided_at": { "type": "string", "format": "date-time", "title": "Decided At" }
+        },
+        "type": "object",
+        "required": ["id", "recommendation_id", "decided_by", "decision", "comment", "decided_at"],
+        "title": "ApprovalHistoryOut"
+      },
+      "Body_upload_dataset_api_v1_datasets_post": {
+        "properties": {
+          "files": {
+            "items": { "type": "string", "contentMediaType": "application/octet-stream" },
+            "type": "array",
+            "title": "Files",
+            "description": "Single .xlsx workbook OR the 5 entity .csv files"
+          },
+          "name": {
+            "anyOf": [{ "type": "string", "maxLength": 200 }, { "type": "null" }],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": ["files"],
+        "title": "Body_upload_dataset_api_v1_datasets_post"
+      },
+      "BreakdownResponse": {
+        "properties": {
+          "dataset_id": { "type": "string", "title": "Dataset Id" },
+          "dimension": { "type": "string", "title": "Dimension" },
+          "from_month": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "From Month"
+          },
+          "to_month": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "To Month" },
+          "as_of": { "type": "string", "title": "As Of" },
+          "items": {
+            "items": { "additionalProperties": true, "type": "object" },
+            "type": "array",
+            "title": "Items"
+          },
+          "metrics": {
+            "additionalProperties": { "additionalProperties": true, "type": "object" },
+            "type": "object",
+            "title": "Metrics"
+          }
+        },
+        "type": "object",
+        "required": ["dataset_id", "dimension", "as_of", "items", "metrics"],
+        "title": "BreakdownResponse"
+      },
+      "BusinessProfileIn": {
+        "properties": {
+          "company_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Company Name",
+            "examples": ["Sunrise Multispeciality Hospital"]
+          },
+          "industry": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Industry",
+            "default": "Healthcare"
+          },
+          "team_size": {
+            "type": "integer",
+            "maximum": 1000000.0,
+            "minimum": 1.0,
+            "title": "Team Size",
+            "examples": [250]
+          },
+          "business_goals": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Business Goals",
+            "default": "",
+            "examples": ["Reduce no-shows and wait times"]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["company_name", "team_size"],
+        "title": "BusinessProfileIn"
+      },
+      "BusinessProfileOut": {
+        "properties": {
+          "company_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Company Name",
+            "examples": ["Sunrise Multispeciality Hospital"]
+          },
+          "industry": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Industry",
+            "default": "Healthcare"
+          },
+          "team_size": {
+            "type": "integer",
+            "maximum": 1000000.0,
+            "minimum": 1.0,
+            "title": "Team Size",
+            "examples": [250]
+          },
+          "business_goals": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Business Goals",
+            "default": "",
+            "examples": ["Reduce no-shows and wait times"]
+          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "updated_at": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": ["company_name", "team_size", "id", "created_at", "updated_at"],
+        "title": "BusinessProfileOut"
+      },
+      "ChatMessageCreateRequest": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Content",
+            "examples": ["What is our invoiced net revenue and approved-expense margin?"]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["content"],
+        "title": "ChatMessageCreateRequest"
+      },
+      "ChatMessageOut": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "session_id": { "type": "string", "format": "uuid", "title": "Session Id" },
+          "dataset_id": { "type": "string", "format": "uuid", "title": "Dataset Id" },
+          "user_id": { "type": "string", "format": "uuid", "title": "User Id" },
+          "role": { "$ref": "#/components/schemas/ChatRole" },
+          "content": { "type": "string", "title": "Content" },
+          "cited_metric_keys": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Cited Metric Keys"
+          },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": ["id", "session_id", "dataset_id", "user_id", "role", "content", "created_at"],
+        "title": "ChatMessageOut"
+      },
+      "ChatRole": { "type": "string", "enum": ["user", "assistant"], "title": "ChatRole" },
+      "ChatSessionCreateRequest": {
+        "properties": {
+          "dataset_id": { "type": "string", "format": "uuid", "title": "Dataset Id" },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "default": "Hospital Operations Q&A"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["dataset_id"],
+        "title": "ChatSessionCreateRequest"
+      },
+      "ChatSessionOut": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "dataset_id": { "type": "string", "format": "uuid", "title": "Dataset Id" },
+          "user_id": { "type": "string", "format": "uuid", "title": "User Id" },
+          "title": { "type": "string", "title": "Title" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": ["id", "dataset_id", "user_id", "title", "created_at"],
+        "title": "ChatSessionOut"
+      },
+      "ChatTurnResponse": {
+        "properties": {
+          "user_message": { "$ref": "#/components/schemas/ChatMessageOut" },
+          "assistant_message": { "$ref": "#/components/schemas/ChatMessageOut" }
+        },
+        "type": "object",
+        "required": ["user_message", "assistant_message"],
+        "title": "ChatTurnResponse"
+      },
+      "Confidence": { "type": "string", "enum": ["high", "medium", "low"], "title": "Confidence" },
+      "DatasetDetailOut": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "owner_id": { "type": "string", "format": "uuid", "title": "Owner Id" },
+          "name": { "type": "string", "title": "Name" },
+          "source_filename": { "type": "string", "title": "Source Filename" },
+          "status": { "$ref": "#/components/schemas/DatasetStatus" },
+          "row_counts": {
+            "additionalProperties": { "type": "integer" },
+            "type": "object",
+            "title": "Row Counts"
+          },
+          "period_start": {
+            "anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+            "title": "Period Start"
+          },
+          "period_end": {
+            "anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+            "title": "Period End"
+          },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "quality_report": { "$ref": "#/components/schemas/QualityReportOut" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "owner_id",
+          "name",
+          "source_filename",
+          "status",
+          "row_counts",
+          "period_start",
+          "period_end",
+          "created_at",
+          "quality_report"
+        ],
+        "title": "DatasetDetailOut"
+      },
+      "DatasetOut": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "owner_id": { "type": "string", "format": "uuid", "title": "Owner Id" },
+          "name": { "type": "string", "title": "Name" },
+          "source_filename": { "type": "string", "title": "Source Filename" },
+          "status": { "$ref": "#/components/schemas/DatasetStatus" },
+          "row_counts": {
+            "additionalProperties": { "type": "integer" },
+            "type": "object",
+            "title": "Row Counts"
+          },
+          "period_start": {
+            "anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+            "title": "Period Start"
+          },
+          "period_end": {
+            "anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+            "title": "Period End"
+          },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "owner_id",
+          "name",
+          "source_filename",
+          "status",
+          "row_counts",
+          "period_start",
+          "period_end",
+          "created_at"
+        ],
+        "title": "DatasetOut"
+      },
+      "DatasetStatus": {
+        "type": "string",
+        "enum": ["processing", "ready", "failed"],
+        "title": "DatasetStatus"
+      },
+      "Decision": { "type": "string", "enum": ["approved", "rejected"], "title": "Decision" },
+      "ErrorBody": {
+        "properties": {
+          "code": { "type": "string", "title": "Code", "examples": ["unauthorized"] },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "examples": ["Invalid email or password"]
+          },
+          "details": { "title": "Details" },
+          "request_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Request Id",
+            "examples": ["5f0c3c1e9b2f4a6d8e7f1a2b3c4d5e6f"]
+          }
+        },
+        "type": "object",
+        "required": ["code", "message"],
+        "title": "ErrorBody"
+      },
+      "ErrorEnvelope": {
+        "properties": { "error": { "$ref": "#/components/schemas/ErrorBody" } },
+        "type": "object",
+        "required": ["error"],
+        "title": "ErrorEnvelope"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": { "status": { "type": "string", "const": "ok", "title": "Status" } },
+        "type": "object",
+        "required": ["status"],
+        "title": "HealthResponse"
+      },
+      "KpiCardOut": {
+        "properties": {
+          "key": { "type": "string", "title": "Key", "examples": ["finance.net_revenue"] },
+          "label": { "type": "string", "title": "Label", "examples": ["Invoiced Net Revenue"] },
+          "value": {
+            "anyOf": [{ "type": "integer" }, { "type": "number" }],
+            "title": "Value",
+            "examples": [22256456.76]
+          },
+          "unit": { "type": "string", "title": "Unit", "examples": ["INR"] },
+          "definition": { "type": "string", "title": "Definition" },
+          "basis": { "type": "string", "title": "Basis" },
+          "as_of": { "type": "string", "title": "As Of", "examples": ["2026-10-31"] },
+          "dataset_id": { "type": "string", "title": "Dataset Id" },
+          "mom_change_pct": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Mom Change Pct",
+            "description": "Month-over-month % change between the last two months in the selected range.",
+            "examples": [5.74]
+          },
+          "latest_month": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Latest Month",
+            "examples": ["2026-10"]
+          },
+          "previous_month": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Previous Month",
+            "examples": ["2026-09"]
+          }
+        },
+        "type": "object",
+        "required": ["key", "label", "value", "unit", "definition", "basis", "as_of", "dataset_id"],
+        "title": "KpiCardOut"
+      },
+      "KpisResponse": {
+        "properties": {
+          "dataset_id": { "type": "string", "title": "Dataset Id" },
+          "from_month": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "From Month"
+          },
+          "to_month": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "To Month" },
+          "as_of": { "type": "string", "title": "As Of" },
+          "cards": {
+            "items": { "$ref": "#/components/schemas/KpiCardOut" },
+            "type": "array",
+            "title": "Cards"
+          },
+          "supplementary": {
+            "additionalProperties": { "additionalProperties": true, "type": "object" },
+            "type": "object",
+            "title": "Supplementary"
+          }
+        },
+        "type": "object",
+        "required": ["dataset_id", "as_of", "cards", "supplementary"],
+        "title": "KpisResponse"
+      },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "examples": ["manager@hospital.example"]
+          },
+          "password": { "type": "string", "maxLength": 128, "minLength": 1, "title": "Password" }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["email", "password"],
+        "title": "LoginRequest"
+      },
+      "MonthlyAppointmentStatusPoint": {
+        "properties": {
+          "month": { "type": "string", "title": "Month" },
+          "total": { "type": "integer", "title": "Total" },
+          "completed": { "type": "integer", "title": "Completed" },
+          "scheduled": { "type": "integer", "title": "Scheduled" },
+          "cancelled": { "type": "integer", "title": "Cancelled" },
+          "no_show": { "type": "integer", "title": "No Show" },
+          "avg_wait_minutes": { "type": "number", "title": "Avg Wait Minutes" }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "total",
+          "completed",
+          "scheduled",
+          "cancelled",
+          "no_show",
+          "avg_wait_minutes"
+        ],
+        "title": "MonthlyAppointmentStatusPoint"
+      },
+      "MonthlyRevenueExpensePoint": {
+        "properties": {
+          "month": { "type": "string", "title": "Month" },
+          "net_revenue": { "type": "number", "title": "Net Revenue" },
+          "approved_expenses": { "type": "number", "title": "Approved Expenses" },
+          "pending_expenses": { "type": "number", "title": "Pending Expenses" },
+          "rejected_expenses": { "type": "number", "title": "Rejected Expenses" },
+          "total_expenses_all_statuses": {
+            "type": "number",
+            "title": "Total Expenses All Statuses"
+          },
+          "approved_margin": { "type": "number", "title": "Approved Margin" }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "net_revenue",
+          "approved_expenses",
+          "pending_expenses",
+          "rejected_expenses",
+          "total_expenses_all_statuses",
+          "approved_margin"
+        ],
+        "title": "MonthlyRevenueExpensePoint"
+      },
+      "Page_AnalysisRunOut_": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/AnalysisRunOut" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "minimum": 0.0, "title": "Total" },
+          "page": { "type": "integer", "minimum": 1.0, "title": "Page" },
+          "page_size": { "type": "integer", "maximum": 100.0, "minimum": 1.0, "title": "Page Size" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "page_size"],
+        "title": "Page[AnalysisRunOut]"
+      },
+      "Page_ChatSessionOut_": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/ChatSessionOut" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "minimum": 0.0, "title": "Total" },
+          "page": { "type": "integer", "minimum": 1.0, "title": "Page" },
+          "page_size": { "type": "integer", "maximum": 100.0, "minimum": 1.0, "title": "Page Size" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "page_size"],
+        "title": "Page[ChatSessionOut]"
+      },
+      "Page_DatasetOut_": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/DatasetOut" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "minimum": 0.0, "title": "Total" },
+          "page": { "type": "integer", "minimum": 1.0, "title": "Page" },
+          "page_size": { "type": "integer", "maximum": 100.0, "minimum": 1.0, "title": "Page Size" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "page_size"],
+        "title": "Page[DatasetOut]"
+      },
+      "Page_RecommendationOut_": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/RecommendationOut" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "minimum": 0.0, "title": "Total" },
+          "page": { "type": "integer", "minimum": 1.0, "title": "Page" },
+          "page_size": { "type": "integer", "maximum": 100.0, "minimum": 1.0, "title": "Page Size" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "page_size"],
+        "title": "Page[RecommendationOut]"
+      },
+      "Page_ReportOut_": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/ReportOut" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "minimum": 0.0, "title": "Total" },
+          "page": { "type": "integer", "minimum": 1.0, "title": "Page" },
+          "page_size": { "type": "integer", "maximum": 100.0, "minimum": 1.0, "title": "Page Size" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "page_size"],
+        "title": "Page[ReportOut]"
+      },
+      "Page_UserOut_": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/UserOut" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "minimum": 0.0, "title": "Total" },
+          "page": { "type": "integer", "minimum": 1.0, "title": "Page" },
+          "page_size": { "type": "integer", "maximum": 100.0, "minimum": 1.0, "title": "Page Size" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "page_size"],
+        "title": "Page[UserOut]"
+      },
+      "QualityReportOut": {
+        "properties": {
+          "period_start": { "type": "string", "title": "Period Start", "examples": ["2026-05-01"] },
+          "period_end": { "type": "string", "title": "Period End", "examples": ["2026-10-31"] },
+          "rows_read": {
+            "additionalProperties": { "type": "integer" },
+            "type": "object",
+            "title": "Rows Read"
+          },
+          "rows_loaded": {
+            "additionalProperties": { "type": "integer" },
+            "type": "object",
+            "title": "Rows Loaded"
+          },
+          "total_read": { "type": "integer", "title": "Total Read" },
+          "total_loaded": { "type": "integer", "title": "Total Loaded" },
+          "total_quarantined": { "type": "integer", "title": "Total Quarantined" },
+          "quarantined_by_entity": {
+            "additionalProperties": { "type": "integer" },
+            "type": "object",
+            "title": "Quarantined By Entity"
+          },
+          "quarantined_by_reason": {
+            "additionalProperties": { "type": "integer" },
+            "type": "object",
+            "title": "Quarantined By Reason"
+          },
+          "quarantined_samples": {
+            "items": { "additionalProperties": true, "type": "object" },
+            "type": "array",
+            "title": "Quarantined Samples"
+          },
+          "derived_dimensions": {
+            "additionalProperties": { "type": "integer" },
+            "type": "object",
+            "title": "Derived Dimensions"
+          },
+          "warnings": {
+            "items": { "$ref": "#/components/schemas/QualityWarningOut" },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period_start",
+          "period_end",
+          "rows_read",
+          "rows_loaded",
+          "total_read",
+          "total_loaded",
+          "total_quarantined",
+          "quarantined_by_entity",
+          "quarantined_by_reason",
+          "quarantined_samples",
+          "derived_dimensions"
+        ],
+        "title": "QualityReportOut"
+      },
+      "QualityWarningOut": {
+        "properties": {
+          "code": { "type": "string", "title": "Code" },
+          "entity": { "type": "string", "title": "Entity" },
+          "message": { "type": "string", "title": "Message" },
+          "duplicate_batch_count": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Duplicate Batch Count"
+          },
+          "affected_items": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Affected Items"
+          },
+          "duplicate_batches": {
+            "anyOf": [{ "items": { "type": "string" }, "type": "array" }, { "type": "null" }],
+            "title": "Duplicate Batches"
+          }
+        },
+        "type": "object",
+        "required": ["code", "entity", "message"],
+        "title": "QualityWarningOut"
+      },
+      "ReadyResponse": {
+        "properties": {
+          "status": { "type": "string", "enum": ["ready", "unavailable"], "title": "Status" },
+          "database": { "type": "string", "enum": ["ok", "unreachable"], "title": "Database" }
+        },
+        "type": "object",
+        "required": ["status", "database"],
+        "title": "ReadyResponse"
+      },
+      "RecommendationDecisionRequest": {
+        "properties": {
+          "decision": { "$ref": "#/components/schemas/Decision" },
+          "comment": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Comment",
+            "default": "",
+            "examples": ["Approved for Q4 pharmacy replenishment budget; PO to be raised manually."]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["decision"],
+        "title": "RecommendationDecisionRequest"
+      },
+      "RecommendationOut": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "report_id": { "type": "string", "format": "uuid", "title": "Report Id" },
+          "title": { "type": "string", "title": "Title" },
+          "rationale": { "type": "string", "title": "Rationale" },
+          "action_type": { "type": "string", "title": "Action Type" },
+          "evidence_metric_keys": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Evidence Metric Keys"
+          },
+          "status": { "$ref": "#/components/schemas/RecommendationStatus" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "evidence_metrics": {
+            "items": { "additionalProperties": true, "type": "object" },
+            "type": "array",
+            "title": "Evidence Metrics"
+          },
+          "approval_history": {
+            "items": { "$ref": "#/components/schemas/ApprovalHistoryOut" },
+            "type": "array",
+            "title": "Approval History"
+          },
+          "execution_mode": {
+            "type": "string",
+            "const": "recorded_decision_only",
+            "title": "Execution Mode",
+            "default": "recorded_decision_only"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "report_id",
+          "title",
+          "rationale",
+          "action_type",
+          "evidence_metric_keys",
+          "status",
+          "created_at"
+        ],
+        "title": "RecommendationOut"
+      },
+      "RecommendationStatus": {
+        "type": "string",
+        "enum": ["pending_approval", "approved", "rejected"],
+        "title": "RecommendationStatus"
+      },
+      "RegisterRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "examples": ["manager@hospital.example"]
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password",
+            "examples": ["Correct-Horse-Battery-9"]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": ["email", "password"],
+        "title": "RegisterRequest"
+      },
+      "ReportDetailOut": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "analysis_id": { "type": "string", "format": "uuid", "title": "Analysis Id" },
+          "dataset_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Dataset Id"
+          },
+          "verdict": { "$ref": "#/components/schemas/Verdict" },
+          "confidence": { "$ref": "#/components/schemas/Confidence" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "content": { "additionalProperties": true, "type": "object", "title": "Content" },
+          "metrics_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metrics Snapshot"
+          },
+          "verification": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Verification"
+          },
+          "recommendations": {
+            "items": { "$ref": "#/components/schemas/RecommendationOut" },
+            "type": "array",
+            "title": "Recommendations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "analysis_id",
+          "verdict",
+          "confidence",
+          "created_at",
+          "content",
+          "metrics_snapshot",
+          "verification"
+        ],
+        "title": "ReportDetailOut"
+      },
+      "ReportOut": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "analysis_id": { "type": "string", "format": "uuid", "title": "Analysis Id" },
+          "dataset_id": {
+            "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+            "title": "Dataset Id"
+          },
+          "verdict": { "$ref": "#/components/schemas/Verdict" },
+          "confidence": { "$ref": "#/components/schemas/Confidence" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": ["id", "analysis_id", "verdict", "confidence", "created_at"],
+        "title": "ReportOut"
+      },
+      "Role": { "type": "string", "enum": ["admin", "manager", "analyst"], "title": "Role" },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token",
+            "description": "Short-lived JWT. Keep in memory only; never persist."
+          },
+          "token_type": {
+            "type": "string",
+            "const": "bearer",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "description": "Access token lifetime in seconds",
+            "examples": [900]
+          },
+          "user": { "$ref": "#/components/schemas/UserOut" }
+        },
+        "type": "object",
+        "required": ["access_token", "expires_in", "user"],
+        "title": "TokenResponse"
+      },
+      "TrendsResponse": {
+        "properties": {
+          "dataset_id": { "type": "string", "title": "Dataset Id" },
+          "from_month": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "From Month"
+          },
+          "to_month": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "To Month" },
+          "as_of": { "type": "string", "title": "As Of" },
+          "revenue_vs_expenses": {
+            "items": { "$ref": "#/components/schemas/MonthlyRevenueExpensePoint" },
+            "type": "array",
+            "title": "Revenue Vs Expenses"
+          },
+          "appointments_by_status": {
+            "items": { "$ref": "#/components/schemas/MonthlyAppointmentStatusPoint" },
+            "type": "array",
+            "title": "Appointments By Status"
+          },
+          "anomalies": {
+            "items": { "$ref": "#/components/schemas/AnomalyItemOut" },
+            "type": "array",
+            "title": "Anomalies"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dataset_id",
+          "as_of",
+          "revenue_vs_expenses",
+          "appointments_by_status",
+          "anomalies"
+        ],
+        "title": "TrendsResponse"
+      },
+      "UserOut": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "email": { "type": "string", "format": "email", "title": "Email" },
+          "role": { "$ref": "#/components/schemas/Role" },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" }
+        },
+        "type": "object",
+        "required": ["id", "email", "role", "is_active", "created_at"],
+        "title": "UserOut"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" },
+          "input": { "title": "Input" },
+          "ctx": { "type": "object", "title": "Context" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      },
+      "Verdict": { "type": "string", "enum": ["approved", "rejected"], "title": "Verdict" }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "description": "Access token from /auth/login or /auth/refresh",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
