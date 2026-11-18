@@ -3,6 +3,7 @@
 Every variable is documented in ``backend/.env.example``. Secrets have no defaults.
 """
 
+import re
 from functools import lru_cache
 from typing import Annotated, Literal
 
@@ -28,8 +29,16 @@ class Settings(BaseSettings):
 
     # ---- CORS ----
     cors_origins: Annotated[list[str], NoDecode] = Field(
-        default_factory=lambda: ["http://localhost:5173"],
+        default_factory=lambda: [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "https://careops-web.onrender.com",
+        ],
         description="Comma-separated allowlist of browser origins.",
+    )
+    cors_origin_regex: str = Field(
+        default=r"^https://[a-z0-9-]+(\.[a-z0-9-]+)*\.(netlify\.app|onrender\.com|vercel\.app)$",
+        description="Regex for dynamic Netlify, Render, and Vercel frontend subdomains.",
     )
 
     # ---- auth / JWT ----
@@ -99,6 +108,11 @@ class Settings(BaseSettings):
     @property
     def max_request_bytes(self) -> int:
         return self.max_request_mb * 1024 * 1024
+
+    def is_origin_allowed(self, origin: str) -> bool:
+        if origin in self.cors_origins:
+            return True
+        return bool(self.cors_origin_regex and re.match(self.cors_origin_regex, origin))
 
 
 @lru_cache

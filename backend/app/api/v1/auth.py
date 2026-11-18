@@ -46,7 +46,7 @@ def _clear_refresh_cookie(response: Response, settings: Settings) -> None:
 def _check_origin(request: Request, settings: Settings) -> None:
     """Defense in depth for cookie-authenticated endpoints (on top of SameSite=Strict)."""
     origin = request.headers.get("origin")
-    if origin is not None and origin not in settings.cors_origins:
+    if origin is not None and not settings.is_origin_allowed(origin):
         raise ForbiddenError("Origin not allowed")
 
 

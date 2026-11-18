@@ -1,0 +1,33 @@
+# Netlify Production Configuration for MediOps Intelligence
+# One-Click Deploy URL: https://app.netlify.com/start/deploy?repository=https://github.com/niravpatel22/MutiAgentHealth
+
+[build]
+  base = "frontend"
+  command = "npm ci && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  VITE_API_BASE_URL = "/api/v1"
+
+# Proxy all /api/v1/* requests directly to the Render FastAPI backend
+# (enables first-party SameSite=Strict httpOnly refresh cookies and zero CORS preflight issues)
+[[redirects]]
+  from = "/api/v1/*"
+  to = "https://careops-api.onrender.com/api/v1/:splat"
+  status = 200
+  force = true
+
+# SPA deep-link fallback for React Router
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "no-referrer"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"

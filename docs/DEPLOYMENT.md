@@ -51,15 +51,27 @@ Services started:
 
 ---
 
-## 3. Cloud Deployment: Frontend (Vercel / Netlify / Cloudflare Pages)
+## 3. Cloud Deployment: Frontend (Netlify / Vercel / Cloudflare Pages)
 
-1. Import the GitHub repository into **Vercel**, **Netlify**, or **Cloudflare Pages**.
+### Option A: One-Click Netlify Deploy (Pre-Wired to Render API via `netlify.toml`)
+
+1. Click or open: **https://app.netlify.com/start/deploy?repository=https://github.com/niravpatel22/MutiAgentHealth**
+2. Netlify reads [`netlify.toml`](../netlify.toml) automatically:
+   - **Base directory:** `frontend`
+   - **Build command:** `npm ci && npm run build`
+   - **Publish directory:** `dist`
+   - **API Edge Proxy (`/api/v1/*`):** Automatically proxies `/api/v1/*` to `https://careops-api.onrender.com/api/v1/:splat` (`200`), so first-party `SameSite=Strict` `httpOnly` `Secure` refresh cookies and all FastAPI endpoints work seamlessly with zero CORS preflight issues.
+   - **Pre-Seeded Demo Login Buttons:** The Login screen includes one-click **Fill Manager**, **Fill Admin**, and **Fill Analyst** buttons pre-seeded on the Render backend (`python -m app.cli seed-demo`).
+
+### Option B: Vercel or Cloudflare Pages
+
+1. Import the GitHub repository into **Vercel** or **Cloudflare Pages**.
 2. Set the project settings:
    - **Root Directory:** `frontend`
    - **Build Command:** `npm run build`
    - **Output Directory:** `dist`
 3. Set the environment variable:
-   - `VITE_API_BASE_URL=https://<your-backend-service>.onrender.com/api/v1`
+   - `VITE_API_BASE_URL=https://careops-api.onrender.com/api/v1`
 4. SPA deep-link routing and security headers are pre-configured in [`frontend/vercel.json`](../frontend/vercel.json) and [`frontend/public/_redirects`](../frontend/public/_redirects).
 
 ---
