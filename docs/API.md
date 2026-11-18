@@ -35,3 +35,8 @@ The interactive OpenAPI documentation is served by the backend at **`/docs`**
 | GET | `/api/v1/datasets/{id}/kpis` | Owner or `admin` | 9 dashboard KPI cards + supplementary metrics (`?from=&to=`) |
 | GET | `/api/v1/datasets/{id}/trends` | Owner or `admin` | Monthly revenue/expenses, appointment status stacks, and anomalies |
 | GET | `/api/v1/datasets/{id}/breakdowns/{dimension}` | Owner or `admin` | Dimensional breakdowns (`department`, `payment_status`, `city`, `insurance_provider`, `age_band`, `category`, `doctor_id`, `service_type`, `approval_status`) |
+| POST | `/api/v1/analyses` | `manager`, `admin` | Enqueue a 6-agent CrewAI analysis run (`202 Accepted`; 1 active per dataset) |
+| GET | `/api/v1/analyses` | Any signed-in | Paginated list of analysis runs |
+| GET | `/api/v1/analyses/{id}` | Owner or `admin` | Run status, revision count, verdict, and per-agent pipeline state |
+| GET | `/api/v1/analyses/{id}/agents` | Owner or `admin` | Detailed per-agent execution logs (`context_from`, `tool_calls`, `output`) |
+| POST | `/api/v1/analyses/{id}/cancel` | Owner (`manager`) or `admin` | Cancel a queued or running analysis |

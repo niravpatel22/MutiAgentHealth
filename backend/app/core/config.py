@@ -53,6 +53,18 @@ class Settings(BaseSettings):
     max_upload_mb: int = Field(default=10, ge=1, le=50)
     max_upload_rows: int = Field(default=100_000, ge=100, le=500_000)
 
+    # ---- LLM / CrewAI ----
+    llm_model: str = "gemini/gemini-2.5-flash"
+    llm_api_key: SecretStr = SecretStr("")
+    llm_base_url: str = ""
+    llm_temperature: float = Field(default=0.2, ge=0.0, le=2.0)
+    llm_timeout_seconds: int = Field(default=60, ge=5, le=600)
+    max_llm_calls_per_analysis: int = Field(default=40, ge=6, le=200)
+
+    # ---- Worker ----
+    analysis_timeout_seconds: int = Field(default=900, ge=30, le=3600)
+    worker_poll_seconds: float = Field(default=2.0, ge=0.2, le=60.0)
+
     @field_validator("database_url", mode="before")
     @classmethod
     def _normalize_database_url(cls, value: object) -> object:

@@ -9,6 +9,7 @@ def test_cors_origins_parsed_from_comma_separated_env(monkeypatch) -> None:
 
 def test_production_flag(monkeypatch) -> None:
     monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("COOKIE_SECURE", "true")
     monkeypatch.setenv("JWT_SECRET", "prod-secret-with-at-least-32-chars-long!")
     assert Settings(_env_file=None).is_production is True
 

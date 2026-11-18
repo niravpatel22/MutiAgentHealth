@@ -11,6 +11,7 @@ import RegisterPage from '../pages/RegisterPage.jsx';
 const DashboardPage = lazy(() => import('../pages/DashboardPage.jsx'));
 const DatasetsPage = lazy(() => import('../pages/DatasetsPage.jsx'));
 const BusinessProfilePage = lazy(() => import('../pages/BusinessProfilePage.jsx'));
+const AnalysesPage = lazy(() => import('../pages/AnalysesPage.jsx'));
 const PlaceholderPage = lazy(() => import('../pages/PlaceholderPage.jsx'));
 
 const defaultQueryClient = new QueryClient({
@@ -46,10 +47,7 @@ export function AppRoutes() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/datasets" element={<DatasetsPage />} />
           <Route path="/profile" element={<BusinessProfilePage />} />
-          <Route
-            path="/analyses"
-            element={<PlaceholderPage title="New Analysis & Agent Monitor" phase="Phase 4" />}
-          />
+          <Route path="/analyses" element={<AnalysesPage />} />
           <Route
             path="/reports"
             element={<PlaceholderPage title="Verified BI Reports & PDF Export" phase="Phase 5" />}
