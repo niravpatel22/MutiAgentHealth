@@ -107,6 +107,80 @@ export default function DashboardPage() {
 
   return (
     <section aria-labelledby="dashboard-heading">
+      <div
+        className="command-banner"
+        role="region"
+        aria-label="Hospital Intelligence Command Summary"
+      >
+        <div className="command-banner-meta">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              marginBottom: 6,
+              flexWrap: 'wrap',
+            }}
+          >
+            <span
+              className="badge"
+              style={{
+                background: 'rgba(13, 148, 136, 0.25)',
+                color: '#5eead4',
+                border: '1px solid rgba(94, 234, 212, 0.35)',
+              }}
+            >
+              <span className="status-pulse" style={{ marginRight: 6 }} />
+              DETERMINISTIC ENGINE VERIFIED
+            </span>
+            <span
+              style={{
+                fontSize: 'var(--text-xs)',
+                color: '#94a3b8',
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              CUT-OFF ANCHOR: 2026-10-31 · 6 TABLES · 7,100 ROWS · ZERO PII
+            </span>
+          </div>
+          <div style={{ fontSize: 'var(--text-lg)', fontWeight: 700, letterSpacing: '-0.02em' }}>
+            MediOps Executive Command &amp; Multi-Agent Decision Intelligence
+          </div>
+          <div style={{ fontSize: 'var(--text-sm)', color: '#cbd5e1', marginTop: 4 }}>
+            All 9 KPIs below are computed directly from SQL over validated hospital records and
+            enforced by the Two-Layer Verification Agent before any executive narrative is
+            published.
+          </div>
+        </div>
+        <div className="command-banner-stats">
+          <Link to="/analyses" className="btn btn-primary btn-sm">
+            Run 6-Agent CrewAI Pipeline
+          </Link>
+          <Link
+            to="/reports"
+            className="btn btn-sm"
+            style={{
+              background: 'rgba(255,255,255,0.1)',
+              color: '#f8fafc',
+              borderColor: 'rgba(255,255,255,0.2)',
+            }}
+          >
+            Executive Report &amp; PDF
+          </Link>
+          <Link
+            to="/chat"
+            className="btn btn-sm"
+            style={{
+              background: 'rgba(255,255,255,0.1)',
+              color: '#f8fafc',
+              borderColor: 'rgba(255,255,255,0.2)',
+            }}
+          >
+            Ask AI Assistant
+          </Link>
+        </div>
+      </div>
+
       <div className="page-header">
         <div>
           <h1 id="dashboard-heading" className="page-title">

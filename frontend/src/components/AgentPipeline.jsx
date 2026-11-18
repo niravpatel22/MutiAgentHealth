@@ -9,6 +9,63 @@ const AGENT_TITLES = {
   verification: '6. Verification Agent',
 };
 
+const TOPOLOGY_STAGES = [
+  {
+    id: 1,
+    label: 'Stage 1 · Data Foundation',
+    nodes: [
+      {
+        key: 'data_analyst',
+        shortTitle: 'Data Analyst Agent',
+        role: 'Canonical SQL KPI & Anomaly Baseline',
+      },
+    ],
+  },
+  {
+    id: 2,
+    label: 'Stage 2 · Domain Intelligence',
+    nodes: [
+      {
+        key: 'marketing',
+        shortTitle: 'Marketing Agent',
+        role: 'Patient Mix, City & Insurance Analysis',
+      },
+      {
+        key: 'finance',
+        shortTitle: 'Finance Agent',
+        role: 'Invoiced Revenue, Margin & Expense Audit',
+      },
+      {
+        key: 'operations',
+        shortTitle: 'Operations Agent',
+        role: 'Wait-Time, Utilization & Inventory Risk',
+      },
+    ],
+  },
+  {
+    id: 3,
+    label: 'Stage 3 · Executive Synthesis',
+    nodes: [
+      {
+        key: 'strategy',
+        shortTitle: 'Strategy Agent',
+        role: 'Cross-Functional KPI Action Roadmap',
+      },
+    ],
+  },
+  {
+    id: 4,
+    label: 'Stage 4 · Two-Layer Guardrail',
+    nodes: [
+      {
+        key: 'verification',
+        shortTitle: 'Verification Agent',
+        role: 'Deterministic Tolerance (±0.5%) + LLM Gate',
+      },
+    ],
+  },
+];
+
 function statusBadgeClass(status) {
   if (status === 'completed') return 'badge badge-success';
   if (status === 'running') return 'badge badge-info';
@@ -43,6 +100,21 @@ export default function AgentPipeline({
     setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const agentByName = {};
+  agents.forEach((ag) => {
+    if (ag.agent_name && !agentByName[ag.agent_name]) {
+      agentByName[ag.agent_name] = ag;
+    }
+  });
+
+  const completedCount = Object.keys(AGENT_TITLES).filter(
+    (k) => agentByName[k]?.status === 'completed',
+  ).length;
+  const progressPct =
+    runStatus === 'completed' ? 100 : Math.min(95, Math.round((completedCount / 6) * 100));
+  const totalTools = agents.reduce((acc, a) => acc + (a.tool_calls?.length ?? 0), 0);
+  const totalDurationMs = agents.reduce((acc, a) => acc + (a.duration_ms ?? 0), 0);
+
   return (
     <section aria-label="CrewAI six-agent execution pipeline">
       <div
@@ -56,12 +128,19 @@ export default function AgentPipeline({
           gap: '12px',
         }}
       >
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <strong>Pipeline Status:</strong>{' '}
           <span className={statusBadgeClass(runStatus)}>{runStatus}</span>
           {revisionCount > 0 && (
-            <span className="badge badge-warning" style={{ marginLeft: '8px' }}>
+            <span className="badge badge-warning" style={{ marginLeft: '4px' }}>
               Revision loops: {revisionCount}
+            </span>
+          )}
+          <span className="kpi-subvalue tabular">Agents completed: {completedCount}/6</span>
+          <span className="kpi-subvalue tabular">Verified tool calls: {totalTools}</span>
+          {totalDurationMs > 0 && (
+            <span className="kpi-subvalue tabular">
+              Execution time: {(totalDurationMs / 1000).toFixed(2)}s
             </span>
           )}
         </div>
@@ -73,6 +152,94 @@ export default function AgentPipeline({
             </span>
           </div>
         )}
+
+        <div style={{ width: '100%' }}>
+          <div className="progress-track" aria-hidden="true">
+            <div className="progress-fill" style={{ width: `${progressPct}%` }} />
+          </div>
+        </div>
+      </div>
+
+      {/* Interactive 4-Stage Topological Context-Chaining Graph */}
+      <div
+        className="card"
+        style={{ marginBottom: '16px', background: 'var(--bg-subtle)' }}
+        aria-label="CrewAI Context Chaining Topology"
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 8,
+          }}
+        >
+          <strong style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+            CREWAI MULTI-AGENT CONTEXT-CHAINING TOPOLOGY (CLICK ANY NODE TO INSPECT LOGS)
+          </strong>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Deterministic SQL Registry → Context Chaining → Two-Layer Verification Gate
+          </span>
+        </div>
+
+        <div className="topology-grid">
+          {TOPOLOGY_STAGES.map((stage) => (
+            <div key={stage.id} className="topology-stage">
+              <div className="topology-stage-title">{stage.label}</div>
+              {stage.nodes.map((node) => {
+                const ag = agentByName[node.key];
+                const nodeStatus = ag?.status || 'queued';
+                const targetId = ag?.id || node.key;
+                return (
+                  <div
+                    key={node.key}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => toggleExpand(targetId)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleExpand(targetId);
+                      }
+                    }}
+                    className={`topology-node status-${nodeStatus}`}
+                    title={`Inspect ${node.shortTitle}`}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      <strong style={{ fontSize: '0.8rem' }}>{node.shortTitle}</strong>
+                      <span className={statusBadgeClass(nodeStatus)}>{nodeStatus}</span>
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                      {node.role}
+                    </div>
+                    {ag && (
+                      <div
+                        className="tabular"
+                        style={{
+                          fontSize: '0.72rem',
+                          color: 'var(--accent-primary)',
+                          marginTop: 4,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {ag.duration_ms != null ? `${ag.duration_ms} ms · ` : ''}
+                        Tools: {ag.tool_calls?.length ?? 0}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
       </div>
 
       <ol
@@ -105,7 +272,9 @@ export default function AgentPipeline({
                   flexWrap: 'wrap',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}
+                >
                   <strong>{title}</strong>
                   <span className={statusBadgeClass(ag.status)}>{ag.status}</span>
                   {ag.context_from?.length > 0 && (

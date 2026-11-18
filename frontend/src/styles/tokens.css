@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CareOps Intelligence — Clinical Design System Tokens & Base Styles
+   MediOps Intelligence — Enterprise Clinical & SaaS Design System
    8-pt spacing grid · 12–16 px radii · hairline borders · WCAG 2.1 AA contrast
    ========================================================================== */
 
@@ -9,7 +9,7 @@
   --bg-surface: #ffffff;
   --bg-subtle: #f1f5f9;
   --bg-elevated: #ffffff;
-  --bg-navy: #0f172a;
+  --bg-navy: #0b1120;
   --bg-navy-elevated: #1e293b;
 
   --text-primary: #0f172a;
@@ -48,12 +48,13 @@
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
-  --shadow-soft: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
-  --shadow-pop: 0 10px 24px rgba(15, 23, 42, 0.08);
+  --shadow-soft: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-pop: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.06);
 
   /* Typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --transition-fast: 160ms ease;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --transition-fast: 160ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -77,6 +78,8 @@
     --status-warning-bg: rgba(217, 119, 6, 0.2);
     --status-danger: #f87171;
     --status-danger-bg: rgba(220, 38, 38, 0.2);
+    --status-info: #2dd4bf;
+    --status-info-bg: rgba(20, 184, 166, 0.16);
     --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.35);
     --shadow-pop: 0 10px 24px rgba(0, 0, 0, 0.5);
   }
@@ -102,6 +105,8 @@
   --status-warning-bg: rgba(217, 119, 6, 0.2);
   --status-danger: #f87171;
   --status-danger-bg: rgba(220, 38, 38, 0.2);
+  --status-info: #2dd4bf;
+  --status-info-bg: rgba(20, 184, 166, 0.16);
   --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.35);
   --shadow-pop: 0 10px 24px rgba(0, 0, 0, 0.5);
 }
@@ -128,10 +133,16 @@ body {
   color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
-.tabular {
+.tabular,
+.mono {
   font-variant-numeric: tabular-nums;
+}
+
+.mono {
+  font-family: var(--font-mono);
 }
 
 :focus-visible {
@@ -142,21 +153,27 @@ body {
 /* ---- Layout Shell ---- */
 .app-shell {
   display: grid;
-  grid-template-columns: 248px 1fr;
+  grid-template-columns: 260px minmax(0, 1fr);
   min-height: 100vh;
+  transition: grid-template-columns var(--transition-fast);
+}
+
+.app-shell.sidebar-collapsed {
+  grid-template-columns: 76px minmax(0, 1fr);
 }
 
 .sidebar {
-  background: var(--bg-navy);
+  background: linear-gradient(180deg, #0b1120 0%, #0f172a 100%);
   color: #f8fafc;
   border-right: 1px solid var(--bg-navy-elevated);
   padding: var(--space-5) var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-4);
   position: sticky;
   top: 0;
   height: 100vh;
+  overflow-y: auto;
 }
 
 .brand {
@@ -173,7 +190,7 @@ body {
   width: 34px;
   height: 34px;
   border-radius: var(--radius-sm);
-  background: var(--accent-primary);
+  background: linear-gradient(135deg, #0e7c86 0%, #14b8a6 100%);
   color: #ffffff;
   display: inline-flex;
   align-items: center;
@@ -181,6 +198,7 @@ body {
   font-weight: 700;
   font-size: 0.88rem;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.35);
 }
 
 .brand-subtitle {
@@ -192,39 +210,84 @@ body {
   margin-top: 2px;
 }
 
+.sidebar-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  padding: 10px 10px 4px;
+}
+
+.app-shell.sidebar-collapsed .brand-text,
+.app-shell.sidebar-collapsed .sidebar-section-label,
+.app-shell.sidebar-collapsed .nav-label,
+.app-shell.sidebar-collapsed .sidebar-footer {
+  display: none;
+}
+
 .nav-list {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 3px;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: 10px 12px;
+  padding: 9px 12px;
   border-radius: var(--radius-sm);
   color: #cbd5e1;
   text-decoration: none;
   font-weight: 500;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   transition:
     background var(--transition-fast),
     color var(--transition-fast);
 }
 
 .nav-link:hover {
-  background: var(--bg-navy-elevated);
+  background: rgba(255, 255, 255, 0.07);
   color: #ffffff;
 }
 
 .nav-link[aria-current='page'] {
-  background: var(--accent-primary);
+  background: linear-gradient(90deg, rgba(14, 124, 134, 0.95) 0%, rgba(13, 148, 136, 0.85) 100%);
   color: #ffffff;
   font-weight: 600;
+  box-shadow: 0 2px 10px rgba(13, 148, 136, 0.3);
+}
+
+.nav-icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.status-pulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+}
+
+.mobile-menu-btn {
+  display: none !important;
 }
 
 .shell-main {
@@ -258,7 +321,7 @@ body {
 
 .page-content {
   padding: var(--space-6);
-  max-width: 1440px;
+  max-width: 1480px;
   width: 100%;
   margin: 0 auto;
 }
@@ -285,10 +348,37 @@ body {
   font-size: 0.92rem;
 }
 
+/* ---- Executive Command Banner ---- */
+.command-banner {
+  background: linear-gradient(135deg, #0b1120 0%, #13233f 55%, #0d4a52 100%);
+  color: #f8fafc;
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-bottom: var(--space-5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-pop);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.command-banner-meta {
+  flex: 1 1 420px;
+  min-width: 0;
+}
+
+.command-banner-stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 /* ---- Cards & Grids ---- */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: var(--space-4);
   margin-bottom: var(--space-6);
 }
@@ -306,6 +396,7 @@ body {
   border-radius: var(--radius-md);
   padding: var(--space-5);
   box-shadow: var(--shadow-soft);
+  min-width: 0;
 }
 
 .kpi-card {
@@ -314,6 +405,43 @@ body {
   justify-content: space-between;
   gap: var(--space-2);
   position: relative;
+  overflow: hidden;
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-pop);
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent-primary);
+  opacity: 0.85;
+}
+
+.kpi-card[data-domain='finance']::before {
+  background: linear-gradient(90deg, #0e7c86, #10b981);
+}
+
+.kpi-card[data-domain='appointments']::before {
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
+}
+
+.kpi-card[data-domain='inventory']::before {
+  background: linear-gradient(90deg, #d97706, #ef4444);
+}
+
+.kpi-card[data-domain='patients']::before,
+.kpi-card[data-domain='operations']::before {
+  background: linear-gradient(90deg, #6366f1, #0e7c86);
 }
 
 .kpi-header {
@@ -362,6 +490,77 @@ body {
   margin-top: var(--space-2);
 }
 
+/* ---- CrewAI Multi-Agent Topology Graph ---- */
+.topology-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.topology-stage {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.topology-stage-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-hairline);
+  padding-bottom: 6px;
+}
+
+.topology-node {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-strong);
+  border-left: 4px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.topology-node:hover {
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-soft);
+}
+
+.topology-node.status-completed {
+  border-left-color: var(--status-success);
+}
+
+.topology-node.status-running {
+  border-left-color: var(--accent-primary);
+  background: var(--accent-soft);
+}
+
+.topology-node.status-failed {
+  border-left-color: var(--status-danger);
+}
+
+.progress-track {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-subtle);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--border-hairline);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-primary), #10b981);
+  transition: width 300ms ease;
+}
+
 /* ---- Badges & Buttons ---- */
 .badge {
   display: inline-flex;
@@ -406,6 +605,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
+  text-decoration: none;
   transition:
     background var(--transition-fast),
     border-color var(--transition-fast);
@@ -468,6 +668,7 @@ body {
   min-width: 0;
 }
 
+/* ---- Auth Split & Card Layout ---- */
 .auth-layout {
   min-height: 100vh;
   display: flex;
@@ -476,14 +677,52 @@ body {
   padding: var(--space-5);
 }
 
+.auth-split {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.08fr 1fr;
+  background: var(--bg-canvas);
+}
+
+.auth-showcase {
+  background: linear-gradient(145deg, #0b1120 0%, #112240 55%, #0d4a52 100%);
+  color: #f8fafc;
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.auth-feature-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.auth-feature-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+
+.auth-form-pane {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+}
+
 .auth-card {
   width: 100%;
-  max-width: 420px;
+  max-width: 460px;
 }
 
 /* ---- Tables ---- */
 .data-table-wrapper {
   overflow-x: auto;
+  max-width: 100%;
 }
 
 .data-table {
@@ -532,8 +771,16 @@ body {
   font-size: 0.88rem;
 }
 
-@media (max-width: 900px) {
-  .app-shell {
+/* ---- Responsive Breakpoints (1920 -> 1440 -> 1366 -> 1024 -> 768 -> 430 -> 390 -> 360) ---- */
+@media (max-width: 1100px) {
+  .topology-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .app-shell,
+  .app-shell.sidebar-collapsed {
     grid-template-columns: minmax(0, 1fr);
   }
   .sidebar {
@@ -541,6 +788,36 @@ body {
     height: auto;
     border-right: none;
     border-bottom: 1px solid var(--border-hairline);
+    padding: 12px 16px;
+    gap: 10px;
+  }
+  .sidebar-section-label,
+  .sidebar-footer {
+    display: none;
+  }
+  .mobile-menu-btn {
+    display: inline-flex !important;
+  }
+  .nav-list {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+      max-height 220ms ease,
+      opacity 180ms ease;
+  }
+  .nav-list.mobile-open {
+    max-height: 440px;
+    opacity: 1;
+    padding-top: 8px;
+  }
+  .nav-link {
+    font-size: 0.82rem;
+    padding: 6px 10px;
   }
   .topbar {
     padding: var(--space-3) var(--space-4);
@@ -549,9 +826,36 @@ body {
     padding: var(--space-4);
   }
   .kpi-grid {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   }
   .charts-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .auth-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .auth-showcase {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .kpi-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .topology-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .command-banner {
+    padding: 14px 16px;
+  }
+  .card {
+    padding: 14px;
+  }
+  .page-content {
+    padding: 12px;
+  }
+  .topbar {
+    padding: 10px 12px;
   }
 }
