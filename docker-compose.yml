@@ -34,8 +34,20 @@ services:
       db:
         condition: service_healthy
 
-  # worker:   (Phase 4) same image as api, command: python -m app.worker
-  # frontend: (Phase 3) Vite build served by a static web server
+  worker:
+    build: ./backend
+    command: ["python", "-m", "app.worker"]
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      APP_ENV: development
+      DATABASE_URL: postgresql+psycopg://healthcare:healthcare@db:5432/healthcare_bi
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # frontend: (Phase 7) Vite build served by a static web server
 
 volumes:
   pgdata:
