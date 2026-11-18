@@ -1,4 +1,4 @@
-.PHONY: install lint format test migrate seed-admin api web up down
+.PHONY: install lint format test migrate seed-admin load-sample-dataset api web up down
 
 UV ?= uv
 
@@ -11,6 +11,9 @@ migrate:
 
 seed-admin:
 	cd backend && $(UV) run python -m app.cli seed-admin
+
+load-sample-dataset:
+	cd backend && $(UV) run python -m app.cli load-sample-dataset
 
 lint:
 	cd backend && $(UV) run ruff check . && $(UV) run black --check .
