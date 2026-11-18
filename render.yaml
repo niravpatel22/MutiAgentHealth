@@ -35,11 +35,11 @@ services:
       - key: ADMIN_EMAIL
         value: admin@mediops.example
       - key: ADMIN_PASSWORD
-        sync: false
+        value: Admin#MediOps2026!
       - key: LLM_MODEL
         value: gemini/gemini-2.5-flash
       - key: LLM_API_KEY
-        sync: false
+        value: ""
 
   - type: web
     name: careops-web
