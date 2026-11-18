@@ -1,10 +1,11 @@
 from fastapi import APIRouter
 
-from app.api.v1 import admin, auth, datasets, health, profile
+from app.api.v1 import admin, analytics, auth, datasets, health, profile
 
 api_router = APIRouter()
 api_router.include_router(health.router)
 api_router.include_router(auth.router)
 api_router.include_router(profile.router)
 api_router.include_router(datasets.router)
+api_router.include_router(analytics.router)
 api_router.include_router(admin.router)
