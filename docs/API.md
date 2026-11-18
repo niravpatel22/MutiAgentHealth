@@ -46,3 +46,9 @@ The interactive OpenAPI documentation is served by the backend at **`/docs`**
 | GET | `/api/v1/recommendations` | Any signed-in | Paginated list of HITL recommendations (`?status=&report_id=`) |
 | GET | `/api/v1/recommendations/{id}` | Owner or `admin` | Recommendation detail, evidence metrics, and approval history |
 | POST | `/api/v1/recommendations/{id}/decision` | `manager`, `admin` | Record an `approved` or `rejected` decision with comment (`analyst` forbidden) |
+| POST | `/api/v1/chat/sessions` | Any signed-in | Create a grounded Business Q&A chat session for a dataset |
+| GET | `/api/v1/chat/sessions` | Any signed-in | Paginated list of chat sessions |
+| POST | `/api/v1/chat/sessions/{id}/messages` | Owner or `admin` | Send a question; returns grounded answer + `cited_metric_keys` |
+| GET | `/api/v1/chat/sessions/{id}/messages` | Owner or `admin` | Full session message history with `cited_metric_keys` |
+| GET | `/api/v1/admin/analyses` | `admin` | Organization-wide list of all analysis runs |
+| GET | `/api/v1/admin/reports` | `admin` | Organization-wide list of all generated BI reports |
