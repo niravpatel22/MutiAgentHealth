@@ -31,8 +31,10 @@ export default function KpiCard({ card }) {
 
   const tooltipId = `kpi-def-${key.replace(/\./g, '-')}`;
 
+  const domain = key ? key.split('.')[0] : 'general';
+
   return (
-    <article className="card kpi-card" aria-label={label}>
+    <article className="card kpi-card" aria-label={label} data-domain={domain}>
       <div className="kpi-header">
         <span className="kpi-label">{label}</span>
         <button
