@@ -1,5 +1,5 @@
 # Local stack. Usage: docker compose up --build
-# Credentials below are for LOCAL DEVELOPMENT ONLY; production uses the host's env settings.
+# Runs db (PostgreSQL 16), api (FastAPI), worker (CrewAI queue runner), and frontend (React SPA).
 name: careops
 
 services:
@@ -47,7 +47,15 @@ services:
       db:
         condition: service_healthy
 
-  # frontend: (Phase 7) Vite build served by a static web server
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: http://localhost:8000/api/v1
+    ports:
+      - "5173:8080"
+    depends_on:
+      - api
 
 volumes:
   pgdata:
