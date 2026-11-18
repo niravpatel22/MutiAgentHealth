@@ -18,6 +18,16 @@ from app.db.models.app import (
     Report,
     Verdict,
 )
+from app.db.models.domain import (
+    Appointment,
+    Doctor,
+    Expense,
+    Invoice,
+    MedicineItem,
+    Patient,
+    Supplier,
+    Vendor,
+)
 from app.db.models.user import BusinessProfile, RefreshToken, Role, User
 
 __all__ = [
@@ -25,6 +35,7 @@ __all__ = [
     "AgentStatus",
     "AnalysisRun",
     "AnalysisStatus",
+    "Appointment",
     "ApprovalHistory",
     "BusinessProfile",
     "ChatMessage",
@@ -34,11 +45,18 @@ __all__ = [
     "Dataset",
     "DatasetStatus",
     "Decision",
+    "Doctor",
+    "Expense",
+    "Invoice",
+    "MedicineItem",
+    "Patient",
     "Recommendation",
     "RecommendationStatus",
     "RefreshToken",
     "Report",
     "Role",
+    "Supplier",
     "User",
+    "Vendor",
     "Verdict",
 ]
