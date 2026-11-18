@@ -1,0 +1,66 @@
+[project]
+name = "healthcare-bi-backend"
+version = "0.1.0"
+description = "Hospital Operations & Performance Intelligence: FastAPI backend, metrics engine and CrewAI agents"
+readme = "../README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "pydantic>=2.10",
+    "pydantic-settings>=2.7",
+    "sqlalchemy>=2.0.36",
+    "psycopg[binary]>=3.2",
+    "structlog>=24.4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "httpx>=0.28",
+    "ruff>=0.9",
+    "black>=25.1",
+    "pip-audit>=2.7",
+    "pre-commit>=4.0",
+]
+
+[tool.uv]
+package = false
+
+# ---------------------------------------------------------------- lint/format
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "C4", "SIM", "RUF", "N", "ASYNC"]
+ignore = ["E501"]  # line length is Black's job
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101", "S105", "S106"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+# ---------------------------------------------------------------- tests
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "live_llm: runs the real CrewAI crew against a configured LLM (opt-in, needs LLM_API_KEY)",
+    "db: requires a reachable PostgreSQL database (DATABASE_URL)",
+]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

@@ -1,0 +1,50 @@
+# Install once:  cd backend && uv run pre-commit install   (run from repo root: see README)
+# Run all:       uv run --project backend pre-commit run --all-files
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: ["--branch", "main"]
+        stages: [pre-commit]
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.0
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff (backend)
+        entry: uv run --project backend --frozen ruff check --fix --config backend/pyproject.toml
+        language: system
+        types: [python]
+        files: ^backend/
+      - id: black
+        name: black (backend)
+        entry: uv run --project backend --frozen black --config backend/pyproject.toml
+        language: system
+        types: [python]
+        files: ^backend/
+      - id: prettier
+        name: prettier (frontend)
+        entry: npm --prefix frontend exec -- prettier --write --ignore-unknown
+        language: system
+        files: ^frontend/
+        exclude: ^frontend/package-lock\.json$
+      - id: eslint
+        name: eslint (frontend)
+        entry: npm --prefix frontend run lint --
+        language: system
+        files: ^frontend/.*\.(js|jsx)$
+        pass_filenames: false

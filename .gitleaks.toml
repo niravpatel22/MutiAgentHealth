@@ -1,0 +1,12 @@
+title = "CareOps Intelligence gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Template and lock files contain no secrets"
+paths = [
+  '''(^|/)\.env\.example$''',
+  '''(^|/)uv\.lock$''',
+  '''(^|/)package-lock\.json$''',
+]
