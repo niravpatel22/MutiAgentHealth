@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import AgentPipeline from '../src/components/AgentPipeline.jsx';
 import ChartCard from '../src/components/ChartCard.jsx';
 import KpiCard from '../src/components/KpiCard.jsx';
 import { AuthProvider } from '../src/features/auth/AuthContext.jsx';
@@ -110,5 +111,47 @@ describe('RequireAuth guard', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Access Restricted' })).toBeInTheDocument();
+  });
+});
+
+describe('AgentPipeline monitor', () => {
+  it('renders agent statuses, revision count, verdict, and expands agent tool logs', () => {
+    const agents = [
+      {
+        id: 'a1',
+        agent_name: 'data_analyst',
+        sequence: 1,
+        status: 'completed',
+        duration_ms: 420,
+        context_from: [],
+        input_summary: 'Baseline KPI scan',
+        tool_calls: [{ tool: 'get_metric', args: { key: 'appointments.total' } }],
+        output: { summary: 'Recorded 2,500 appointments.' },
+      },
+      {
+        id: 'a2',
+        agent_name: 'marketing',
+        sequence: 2,
+        status: 'running',
+        started_at: new Date().toISOString(),
+        context_from: ['data_analyst'],
+        tool_calls: [],
+        output: null,
+      },
+    ];
+
+    render(
+      <AgentPipeline agents={agents} runStatus="running" revisionCount={1} verdict="approved" />,
+    );
+
+    expect(screen.getByText('1. Data Analyst Agent')).toBeInTheDocument();
+    expect(screen.getByText('2. Marketing Agent')).toBeInTheDocument();
+    expect(screen.getByText('Revision loops: 1')).toBeInTheDocument();
+    expect(screen.getByText('APPROVED')).toBeInTheDocument();
+
+    const logButtons = screen.getAllByRole('button', { name: 'View logs' });
+    fireEvent.click(logButtons[0]);
+    expect(screen.getByText(/Baseline KPI scan/)).toBeInTheDocument();
+    expect(screen.getByText('get_metric')).toBeInTheDocument();
   });
 });
