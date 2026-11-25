@@ -27,8 +27,18 @@ export function AuthProvider({ children, initialUser = null, skipBootstrap = fal
     let active = true;
     (async () => {
       const refreshed = await refreshSession();
+      let resolvedUser = refreshed?.user ?? null;
+      if (!resolvedUser && refreshed?.access_token) {
+        // Cookie refresh unavailable: validate the tab-scoped token against /auth/me instead.
+        try {
+          resolvedUser = await apiRequest('/auth/me', { skipAuthRefresh: true });
+        } catch {
+          clearAccessToken();
+          resolvedUser = null;
+        }
+      }
       if (active) {
-        setUser(refreshed?.user ?? null);
+        setUser(resolvedUser);
         setIsLoading(false);
       }
     })();

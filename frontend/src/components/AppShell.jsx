@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '../api/client.js';
+import { API_ORIGIN, apiRequest } from '../api/client.js';
 import { useAuth } from '../features/auth/AuthContext.jsx';
 
 const NAV_ITEMS = [
@@ -260,8 +260,23 @@ export default function AppShell() {
             <span className="status-pulse" aria-hidden="true" />
             <span style={{ fontWeight: 600, color: '#e2e8f0' }}>6-Agent CrewAI Engine Live</span>
           </div>
-          <div>Deterministic KPI Registry · v1.0</div>
+          <div>Neon Postgres + FastAPI · v2.0</div>
           <div style={{ marginTop: 2 }}>Cut-off anchor: 2026-10-31</div>
+          <a
+            href={`${API_ORIGIN}/docs`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-block',
+              marginTop: 8,
+              color: '#5eead4',
+              fontWeight: 600,
+              fontSize: '0.75rem',
+              textDecoration: 'underline',
+            }}
+          >
+            Open Live FastAPI Swagger (/docs) ↗
+          </a>
         </div>
       </aside>
 
@@ -306,6 +321,16 @@ export default function AppShell() {
           </div>
 
           <div className="topbar-controls">
+            <a
+              href={`${API_ORIGIN}/docs`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-secondary"
+              style={{ fontSize: '0.78rem', padding: '5px 10px' }}
+              title="Open live FastAPI Swagger documentation"
+            >
+              Swagger API Docs ↗
+            </a>
             <button
               type="button"
               className="btn btn-secondary"

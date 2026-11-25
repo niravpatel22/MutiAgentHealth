@@ -12,14 +12,31 @@ const isLocalHost =
   window.location.hostname === '127.0.0.1' ||
   window.location.hostname === 'testserver';
 
-const DEFAULT_BASE_URL = isLocalHost ? 'http://localhost:8000/api/v1' : '/api/v1';
+const DEFAULT_BASE_URL = isLocalHost
+  ? 'http://localhost:8000/api/v1'
+  : 'https://careops-api-oi3h.onrender.com/api/v1';
 
 export const API_BASE_URL = (import.meta.env?.VITE_API_BASE_URL || DEFAULT_BASE_URL).replace(
   /\/+$/,
   '',
 );
 
-let accessToken = null;
+/** Public backend origin (used for the Swagger link and the live-API status badge). */
+export const API_ORIGIN = API_BASE_URL.replace(/\/api\/v1$/, '');
+
+const TOKEN_KEY = 'mediops.access_token';
+
+function readStoredToken() {
+  try {
+    return typeof window !== 'undefined' ? window.sessionStorage.getItem(TOKEN_KEY) : null;
+  } catch {
+    return null;
+  }
+}
+
+// Access token lives in memory and in sessionStorage (tab-scoped, cleared on tab close) so a page
+// reload does not log the user out when the browser blocks third-party refresh cookies.
+let accessToken = readStoredToken();
 let refreshPromise = null;
 
 export function getAccessToken() {
@@ -28,10 +45,16 @@ export function getAccessToken() {
 
 export function setAccessToken(token) {
   accessToken = token || null;
+  try {
+    if (accessToken) window.sessionStorage.setItem(TOKEN_KEY, accessToken);
+    else window.sessionStorage.removeItem(TOKEN_KEY);
+  } catch {
+    // storage unavailable (private mode) - memory only
+  }
 }
 
 export function clearAccessToken() {
-  accessToken = null;
+  setAccessToken(null);
 }
 
 export class ApiError extends Error {
@@ -72,8 +95,10 @@ export async function refreshSession() {
         headers: { Accept: 'application/json' },
       });
       if (!response.ok) {
-        clearAccessToken();
-        return null;
+        // Keep a still-valid in-memory/session token if the refresh cookie is unavailable
+        // (e.g. third-party cookies blocked); the API will 401 if it has expired.
+        if (!accessToken) clearAccessToken();
+        return accessToken ? { access_token: accessToken, user: null, fromCache: true } : null;
       }
       const data = await response.json();
       setAccessToken(data.access_token);

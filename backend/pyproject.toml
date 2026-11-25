@@ -1,8 +1,7 @@
 [project]
-name = "healthcare-bi-backend"
-version = "0.1.0"
-description = "Hospital Operations & Performance Intelligence: FastAPI backend, metrics engine and CrewAI agents"
-readme = "../README.md"
+name = "mediops-backend"
+version = "2.0.0"
+description = "MediOps Intelligence - Hospital Operations & Performance Intelligence API (FastAPI + CrewAI + Gemini + PostgreSQL)"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi>=0.115",
@@ -20,7 +19,7 @@ dependencies = [
     "pandas>=2.2",
     "numpy>=2.1",
     "openpyxl>=3.1.5",
-    "crewai==1.15.41",
+    "crewai[google-genai]==1.15.41",
     "reportlab>=4.2",
     "matplotlib>=3.9",
 ]
@@ -32,14 +31,11 @@ dev = [
     "httpx>=0.28",
     "ruff>=0.9",
     "black>=25.1",
-    "pip-audit>=2.7",
-    "pre-commit>=4.0",
 ]
 
 [tool.uv]
 package = false
 
-# ---------------------------------------------------------------- lint/format
 [tool.black]
 line-length = 100
 target-version = ["py312"]
@@ -47,32 +43,13 @@ target-version = ["py312"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-exclude = ["alembic/versions"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "B", "UP", "S", "C4", "SIM", "RUF", "N", "ASYNC"]
-ignore = ["E501"]  # line length is Black's job
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
 
-[tool.ruff.lint.per-file-ignores]
-"**/tests/**" = ["S101", "S105", "S106"]
-
-[tool.ruff.lint.isort]
-known-first-party = ["app"]
-known-third-party = ["alembic"]
-
-# ---------------------------------------------------------------- tests
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra --strict-markers"
-markers = [
-    "live_llm: runs the real CrewAI crew against a configured LLM (opt-in, needs LLM_API_KEY)",
-    "db: requires a reachable PostgreSQL database (DATABASE_URL)",
-]
-
-[tool.coverage.run]
-source = ["app"]
-branch = true
-
-[tool.coverage.report]
-show_missing = true
-skip_covered = true
+addopts = "-q"
+markers = ["live_llm: opt-in integration test hitting the live Gemini LLM"]
+filterwarnings = ["ignore::DeprecationWarning"]

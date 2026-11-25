@@ -63,7 +63,7 @@ def create_hospital_agents(llm: BaseLLM, tools: list[BaseTool]) -> dict[str, Age
     common = {
         "llm": llm,
         "allow_delegation": False,
-        "max_iter": 6,
+        "max_iter": 3,
         "verbose": False,
     }
 

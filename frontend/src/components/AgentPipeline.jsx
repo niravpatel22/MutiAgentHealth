@@ -277,6 +277,11 @@ export default function AgentPipeline({
                 >
                   <strong>{title}</strong>
                   <span className={statusBadgeClass(ag.status)}>{ag.status}</span>
+                  {ag.output?._execution?.model && (
+                    <span className="badge badge-info" title="Executed via live CrewAI LLM">
+                      LLM: {ag.output._execution.model}
+                    </span>
+                  )}
                   {ag.context_from?.length > 0 && (
                     <span className="kpi-subvalue">
                       Context from: <code>{ag.context_from.join(', ')}</code>

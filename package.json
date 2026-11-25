@@ -1,0 +1,14 @@
+{
+  "name": "mediops-intelligence-monorepo",
+  "private": true,
+  "version": "2.0.0",
+  "scripts": {
+    "build": "npm --prefix frontend run build",
+    "test": "npm --prefix frontend test",
+    "dev": "npm --prefix frontend run dev"
+  },
+  "dependencies": {
+    "@neon/config": "^1.14.6",
+    "@neon/env": "^2.1.9"
+  }
+}

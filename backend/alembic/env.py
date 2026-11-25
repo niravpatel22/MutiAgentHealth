@@ -1,10 +1,14 @@
-"""Alembic migration environment. Reads DATABASE_URL from app.core.config."""
+"""Alembic migration environment.
+
+Follows Neon best practices: reads `settings.migration_url` (`DATABASE_URL_UNPOOLED` if set,
+falling back to `DATABASE_URL`) so DDL runs over a direct connection rather than PgBouncer.
+"""
 
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from alembic import context
 from app.core.config import get_settings
 from app.db import models  # noqa: F401 - registers all models on Base.metadata
 from app.db.base import Base
@@ -13,7 +17,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-config.set_main_option("sqlalchemy.url", get_settings().database_url)
+config.set_main_option("sqlalchemy.url", get_settings().migration_url)
 target_metadata = Base.metadata
 
 

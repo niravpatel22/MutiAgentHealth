@@ -146,12 +146,29 @@ def answer_business_question(
 
     # Live LLM path when an API key is configured outside test mode
     if settings.llm_api_key.get_secret_value() and settings.app_env != "test":
-        crew = create_chat_qa_crew(settings, ctx, question)
-        res = crew.kickoff()
-        if res.pydantic is not None:
-            reply = ChatAgentStructuredReply.model_validate(res.pydantic)
-            valid_keys = [k for k in reply.cited_metric_keys if k in METRIC_SPECS]
-            return ChatAgentStructuredReply(answer=reply.answer, cited_metric_keys=valid_keys)
+        candidate_models = [settings.llm_model]
+        if settings.llm_fallback_model and settings.llm_fallback_model not in candidate_models:
+            candidate_models.append(settings.llm_fallback_model)
+        for model_name in candidate_models:
+            try:
+                model_settings = settings.model_copy(update={"llm_model": model_name})
+                crew = create_chat_qa_crew(model_settings, ctx, question)
+                res = crew.kickoff()
+                if res.pydantic is not None:
+                    reply = ChatAgentStructuredReply.model_validate(res.pydantic)
+                    valid_keys = [k for k in reply.cited_metric_keys if k in METRIC_SPECS]
+                    if not valid_keys:
+                        valid_keys = [
+                            c["args"]["key"]
+                            for c in ctx.tool_calls
+                            if c.get("tool") == "get_metric"
+                            and c.get("args", {}).get("key") in METRIC_SPECS
+                        ]
+                    return ChatAgentStructuredReply(
+                        answer=reply.answer, cited_metric_keys=list(dict.fromkeys(valid_keys))
+                    )
+            except Exception:
+                continue
 
     # Deterministic CrewAI tool-driven Q&A path (executes the real CrewAI BaseTool instances)
     tools = {t.name: t for t in build_agent_tools(ctx)}

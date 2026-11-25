@@ -1,51 +1,32 @@
-# ---- Secrets / env ----
+# Neon & local environments (NEVER commit secrets)
+.neon
 .env
 .env.*
 !.env.example
-*.pem
-*.key
+backend/.env
+frontend/.env
 
-# ---- Python ----
+# Python / uv
 __pycache__/
 *.py[cod]
-*.egg-info/
+*$py.class
 .venv/
-venv/
-.python-version
+backend/.venv/
 .pytest_cache/
 .ruff_cache/
-.mypy_cache/
 .coverage
-.coverage.*
-coverage.xml
 htmlcov/
-
-# ---- Node / frontend ----
-node_modules/
-frontend/dist/
-frontend/coverage/
-.netlify/
-*.tsbuildinfo
-npm-debug.log*
-
-# ---- Local data / runtime ----
-*.sqlite
-*.sqlite3
 *.db
-pgdata/
-uploads/
-backend/uploads/
-tmp/
-*.log
+*.sqlite3
 
-# ---- Generated reports (only the committed sample is kept) ----
-*.pdf
-!docs/sample_report.pdf
-!frontend/public/sample_report.pdf
+# Node / Vite / Netlify
+node_modules/
+frontend/node_modules/
+frontend/dist/
+.netlify/
+frontend/.netlify/
 
-# ---- Editors / OS ----
-.vscode/*
-!.vscode/extensions.json
-.idea/
-.DS_Store
-Thumbs.db
+# Workspace assessment reference docs (kept local, not part of app repo)
+Six_Industry_CrewAI_Datasets/
+AI_Business_Intelligence_Project.docx
+nirav_sir_workflow.pdf

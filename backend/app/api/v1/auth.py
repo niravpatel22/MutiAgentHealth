@@ -29,7 +29,7 @@ def _set_refresh_cookie(
         path=_cookie_path(settings),
         httponly=True,
         secure=settings.cookie_secure,
-        samesite="strict",
+        samesite=settings.cookie_samesite,
     )
 
 
@@ -39,7 +39,7 @@ def _clear_refresh_cookie(response: Response, settings: Settings) -> None:
         path=_cookie_path(settings),
         httponly=True,
         secure=settings.cookie_secure,
-        samesite="strict",
+        samesite=settings.cookie_samesite,
     )
 
 

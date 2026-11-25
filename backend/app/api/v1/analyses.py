@@ -51,10 +51,8 @@ def create_analysis(
     settings: AppSettings,
     run_inline: Annotated[
         bool,
-        Query(
-            description="When true in dev/single-service mode, triggers a worker tick after returning 202."
-        ),
-    ] = False,
+        Query(description="When true, triggers a worker tick in background after returning 202."),
+    ] = True,
 ) -> AnalysisDetailOut:
     run = analysis_service.enqueue_analysis(db, user, body.dataset_id)
     if run_inline and settings.app_env != "test":
