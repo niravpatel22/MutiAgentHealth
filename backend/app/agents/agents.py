@@ -1,10 +1,22 @@
 """Six specialized CrewAI agents for Hospital Operations & Performance Intelligence."""
 
+import os
+import tempfile
 from typing import Any
 
-from crewai import LLM, Agent
-from crewai.llms.base_llm import BaseLLM
-from crewai.tools import BaseTool
+# Ensure CrewAI config/data dirs are writable in read-only / non-root containers before importing crewai
+os.environ.setdefault("CREWAI_DISABLE_TELEMETRY", "true")
+os.environ.setdefault("CREWAI_TRACING_ENABLED", "false")
+os.environ.setdefault("OTEL_SDK_DISABLED", "true")
+if not os.environ.get("LOCALAPPDATA"):
+    os.environ.setdefault("XDG_DATA_HOME", tempfile.gettempdir())
+    os.environ.setdefault("XDG_CONFIG_HOME", tempfile.gettempdir())
+    if not os.access(os.environ.get("HOME", "/"), os.W_OK):
+        os.environ["HOME"] = tempfile.gettempdir()
+
+from crewai import LLM, Agent  # noqa: E402
+from crewai.llms.base_llm import BaseLLM  # noqa: E402
+from crewai.tools import BaseTool  # noqa: E402
 
 from app.core.config import Settings
 from app.schemas.analysis import AGENT_PIPELINE, AgentMetadata

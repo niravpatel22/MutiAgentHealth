@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-# Ensure CrewAI telemetry is disabled and its token directory is writable before importing crewai.
+# Ensure CrewAI telemetry is disabled and its token/config directories are writable before importing crewai.
 os.environ.setdefault("CREWAI_DISABLE_TELEMETRY", "true")
 os.environ.setdefault("CREWAI_TRACING_ENABLED", "false")
 os.environ.setdefault("OTEL_SDK_DISABLED", "true")
@@ -28,6 +28,9 @@ if _local_app_data:
         os.environ["LOCALAPPDATA"] = tempfile.gettempdir()
 else:
     os.environ.setdefault("XDG_DATA_HOME", tempfile.gettempdir())
+    os.environ.setdefault("XDG_CONFIG_HOME", tempfile.gettempdir())
+    if not os.access(os.environ.get("HOME", "/"), os.W_OK):
+        os.environ["HOME"] = tempfile.gettempdir()
 
 from crewai.tools import BaseTool  # noqa: E402
 from pydantic import BaseModel, ConfigDict, Field  # noqa: E402

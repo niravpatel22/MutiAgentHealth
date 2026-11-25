@@ -18,9 +18,16 @@ FROM python:3.12-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:$PATH" \
-    APP_ENV=production
+    APP_ENV=production \
+    HOME=/tmp \
+    XDG_CONFIG_HOME=/tmp \
+    XDG_DATA_HOME=/tmp \
+    CREWAI_DISABLE_TELEMETRY=true \
+    CREWAI_TRACING_ENABLED=false \
+    OTEL_SDK_DISABLED=true
 RUN groupadd --system --gid 10001 app \
-    && useradd --system --uid 10001 --gid app --home-dir /app --shell /usr/sbin/nologin app
+    && useradd --system --uid 10001 --gid app --home-dir /app --shell /usr/sbin/nologin app \
+    && mkdir -p /app/.config /app/.local && chown -R app:app /app
 WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
 COPY --chown=app:app alembic.ini ./
