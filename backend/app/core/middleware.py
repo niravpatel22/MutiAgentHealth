@@ -118,7 +118,7 @@ class SecurityHeadersMiddleware:
                     (b"referrer-policy", b"no-referrer"),
                     (b"x-frame-options", b"DENY"),
                     (b"cross-origin-opener-policy", b"same-origin"),
-                    (b"cross-origin-resource-policy", b"same-site"),
+                    (b"cross-origin-resource-policy", b"cross-origin"),
                     (b"permissions-policy", b"camera=(), microphone=(), geolocation=()"),
                 ]
                 if b"cache-control" not in present:

@@ -127,14 +127,40 @@ export async function apiRequest(
     reqHeaders['Content-Type'] = 'application/json';
   }
 
-  const doFetch = () =>
-    fetch(`${API_BASE_URL}${path}`, {
-      method,
-      credentials: 'include',
-      headers: reqHeaders,
-      body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
-      signal,
-    });
+  const doFetch = async () => {
+    const maxAttempts = 4;
+    let lastErr = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        const res = await fetch(`${API_BASE_URL}${path}`, {
+          method,
+          credentials: 'include',
+          headers: reqHeaders,
+          body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
+          signal,
+        });
+        if (
+          (res.status === 502 || res.status === 503 || res.status === 504) &&
+          attempt < maxAttempts
+        ) {
+          await new Promise((r) => setTimeout(r, 1500 * attempt));
+          continue;
+        }
+        return res;
+      } catch (err) {
+        lastErr = err;
+        if (signal?.aborted || attempt === maxAttempts) {
+          break;
+        }
+        // Automatically retry network errors while Render Free container wakes up or restarts
+        await new Promise((r) => setTimeout(r, 1500 * attempt));
+      }
+    }
+    throw new ApiError(
+      'Backend service is waking up on Render — please try again in a few seconds.',
+      { status: 503, code: 'network_unavailable', details: String(lastErr?.message || '') },
+    );
+  };
 
   let response = await doFetch();
 

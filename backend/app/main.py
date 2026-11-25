@@ -1,6 +1,8 @@
 """FastAPI application factory."""
 
+import gc
 import re
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,6 +24,20 @@ from app.core.middleware import (
 from app.core.rate_limit import limiter, rate_limit_handler
 
 
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    try:
+        from app.db.session import get_sessionmaker
+        from app.worker.runner import recover_interrupted_runs
+
+        with get_sessionmaker()() as db:
+            recover_interrupted_runs(db)
+    except Exception:
+        pass
+    gc.collect()
+    yield
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings.log_level)
@@ -37,6 +53,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         docs_url=None,  # served below with a per-request CSP nonce (no unsafe-inline scripts)
         redoc_url=None,
         openapi_url="/openapi.json",
+        lifespan=_lifespan,
     )
 
     app.state.limiter = limiter

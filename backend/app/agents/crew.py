@@ -721,6 +721,9 @@ def execute_analysis_pipeline(
         ex_row.llm_calls = llm_calls
         prior_outputs[meta.slug] = output_dict
         db.commit()
+        import gc
+
+        gc.collect()
 
     # Steps 1..6 initial pass
     for meta in AGENT_PIPELINE:

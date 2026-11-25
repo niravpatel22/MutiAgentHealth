@@ -1,5 +1,6 @@
 """Dataset management service: upload ingestion, scoped listing, detail, and deletion."""
 
+import gc
 import uuid
 from pathlib import Path
 
@@ -28,14 +29,19 @@ def ingest_upload(
         files, max_mb=settings.max_upload_mb, max_rows=settings.max_upload_rows
     )
     cleaned = validate_and_clean(frames)
+    del frames
+    gc.collect()
     dataset_name = (name or "").strip() or Path(files[0].filename).stem or "Healthcare Dataset"
-    return persist_cleaned_dataset(
+    ds = persist_cleaned_dataset(
         db,
         owner_id=owner.id,
         name=dataset_name[:200],
         source_filename=source_filename[:255],
         cleaned=cleaned,
     )
+    del cleaned
+    gc.collect()
+    return ds
 
 
 def list_datasets(db: Session, user: User, page: PageParams) -> tuple[list[Dataset], int]:
